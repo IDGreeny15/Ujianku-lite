@@ -752,6 +752,7 @@
       renderSoal();
       renderNavGrid();
       mulaiTimer();
+      kunciRiwayatBrowser();
       mintaFullscreen();
     }
 
@@ -1133,6 +1134,39 @@
     }
 
     // ==================== EVENT LISTENER ANTI-CHEAT ====================
+    function kunciRiwayatBrowser() {
+      try {
+        history.pushState({ examLock: true }, "", location.href);
+        history.pushState({ examLock: true }, "", location.href);
+      } catch (e) {}
+    }
+
+    window.addEventListener("popstate", () => {
+      if (state.active && !state.submitted) {
+        kunciRiwayatBrowser();
+        catatPelanggaran("Menekan tombol Kembali (Back) saat ujian berlangsung.");
+        mintaFullscreen();
+      }
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+      if (state.active && !state.submitted) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    ["click", "touchstart"].forEach((evt) => {
+      document.addEventListener(evt, () => {
+        if (state.active && !state.submitted) {
+          const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+          if (!isFs) {
+            mintaFullscreen();
+          }
+        }
+      });
+    });
+
     document.addEventListener("visibilitychange", () => {
       if (document.hidden && state.active && !state.submitted) {
         catatPelanggaran("Terdeteksi berpindah tab atau meminimalkan browser.");
@@ -1148,6 +1182,7 @@
     document.addEventListener("fullscreenchange", () => {
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
       if (!isFs && state.active && !state.submitted) {
+        kunciRiwayatBrowser();
         catatPelanggaran("Keluar dari mode layar penuh (Fullscreen).");
       }
     });
