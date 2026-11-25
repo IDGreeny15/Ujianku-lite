@@ -581,6 +581,20 @@
       </div>
 
       <div class="card">
+        <h3>Penyimpanan Terpusat Hasil Ujian (Khusus Admin)</h3>
+        <p>Kirim otomatis rekap nilai dan kritik saran seluruh siswa ke satu endpoint terpusat (misalnya Google Apps Script Web App). Siswa tidak dapat melihat atau membaca rekap terpusat ini dari halaman siswa.</p>
+        <div class="form-group">
+          <label for="centralEndpointInput">URL Endpoint Penyimpanan Terpusat (Apps Script / Webhook)</label>
+          <input type="url" id="centralEndpointInput" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" />
+        </div>
+        <div class="row-2" style="margin-bottom:10px;">
+          <button type="button" class="btn btn-primary" onclick="simpanKonfigurasiPusat()">Simpan Endpoint</button>
+          <button type="button" class="btn btn-outline" onclick="kirimAntreanTertunda()">Kirim Antrean Gagal (0)</button>
+        </div>
+        <div id="centralStatusInfo" style="font-size:0.82rem; color:var(--muted);"></div>
+      </div>
+
+      <div class="card">
         <h3>Rekap Nilai Peserta (Lokal Perangkat)</h3>
         <p>Data tersimpan di browser perangkat ini. Anda dapat mengunduh rekap dalam format CSV (bisa dibuka di Excel/Spreadsheet).</p>
         <div class="row-2" style="margin-bottom:10px;">
@@ -658,18 +672,6 @@
           <textarea id="jsonPaketInput" rows="6" placeholder='{"judul":"Latihan IPA","durasiMenit":10,"soal":[{"q":"Planet terdekat matahari?","opsi":["Merkurius","Venus","Bumi","Mars"],"jawaban":0}]}'></textarea>
         </div>
         <button class="btn btn-primary" onclick="simpanPaketBaru()">Simpan Paket Soal</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Konfirmasi Kumpulkan Ujian -->
-  <div id="submitModal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <h3>Konfirmasi Pengumpulan</h3>
-      <p id="submitModalMessage" style="color:var(--text); margin-bottom:16px;"></p>
-      <div class="row-2">
-        <button type="button" class="btn btn-outline" onclick="tutupModalKonfirmasiSelesai()">Batal</button>
-        <button type="button" class="btn btn-success" onclick="prosesKumpulkanSekarang()">Ya, Kumpulkan</button>
       </div>
     </div>
   </div>
@@ -2594,18 +2596,17 @@
       const paketList = ambilSemuaPaket();
       const prevValue = select.value;
       select.innerHTML = "";
-      paketList.forEach((p) => {
+      paketList.forEach((p, idx) => {
         const opt = document.createElement("option");
-        opt.value = p.id;
+        opt.value = idx;
         const terkunci = isPaketDikunci(p.id);
         opt.textContent = terkunci ? `${p.judul} — terkunci` : p.judul;
         select.appendChild(opt);
       });
-      if (prevValue !== "" && paketList.some((p) => p.id === prevValue)) {
+      if (prevValue !== "") {
         select.value = prevValue;
       }
       updateStatusPaketTerpilih();
-      renderPilihanNama();
     }
 
     function acakArray(arr) {
@@ -2766,36 +2767,16 @@
       return DAFTAR_NAMA_PER_KELAS[kelas] || [];
     }
 
-    function ambilPaketTerpilih() {
-      const select = document.getElementById("paketSelect");
-      const paketList = ambilSemuaPaket();
-      if (!select || !select.value) return paketList[0] || null;
-      return paketList.find((p) => p.id === select.value) || paketList[0] || null;
-    }
-
-    function sudahPernahMengerjakan(nama, paket) {
-      const targetNama = String(nama || "").trim().toLowerCase();
-      if (!targetNama) return false;
+    function sudahPernahMengerjakan(nama) {
+      const target = String(nama || "").trim().toLowerCase();
+      if (!target) return false;
       const rekap = ambilRekap();
-      if (!paket) {
-        return rekap.some((r) => String(r.nama || "").trim().toLowerCase() === targetNama);
-      }
-      const targetPaketId = String(paket.id || "").trim().toLowerCase();
-      const targetPaketJudul = String(paket.judul || "").trim().toLowerCase();
-      return rekap.some((r) => {
-        const rNama = String(r.nama || "").trim().toLowerCase();
-        if (rNama !== targetNama) return false;
-        if (r.paketId) {
-          return String(r.paketId).trim().toLowerCase() === targetPaketId;
-        }
-        return String(r.paket || "").trim().toLowerCase() === targetPaketJudul;
-      });
+      return rekap.some((r) => String(r.nama || "").trim().toLowerCase() === target);
     }
 
     function renderPilihanNama() {
       const select = document.getElementById("studentName");
       if (!select) return;
-      const prevNama = select.value;
       const kelas = ambilKelasAktif();
       if (!kelas) {
         select.innerHTML = '<option value="">-- Pilih Kelas Terlebih Dahulu --</option>';
@@ -2808,19 +2789,15 @@
         select.innerHTML = `<option value="">-- Belum ada daftar nama untuk ${kelas} --</option>`;
         return;
       }
-      const paketAktif = ambilPaketTerpilih();
       select.innerHTML = `<option value="">-- Pilih Nama Siswa (${kelas}) --</option>`;
       daftar.forEach((nama) => {
-        const sudah = sudahPernahMengerjakan(nama, paketAktif);
+        const sudah = sudahPernahMengerjakan(nama);
         const opt = document.createElement("option");
         opt.value = nama;
         opt.disabled = sudah;
         opt.textContent = sudah ? `${nama} (Sudah mengerjakan)` : nama;
         select.appendChild(opt);
       });
-      if (prevNama && daftar.includes(prevNama) && !sudahPernahMengerjakan(prevNama, paketAktif)) {
-        select.value = prevNama;
-      }
     }
 
     function simpanDaftarNama() {
@@ -2859,6 +2836,16 @@
           pesan: isi
         });
         localStorage.setItem(STORAGE_KEY_KRITIK, JSON.stringify(list));
+        kirimPayloadKePusat({
+          type: "kritik",
+          data: {
+            waktu: new Date().toLocaleString("id-ID"),
+            nama,
+            kelas,
+            sumber,
+            pesan: isi
+          }
+        });
         return true;
       } catch (e) {
         return false;
@@ -2912,15 +2899,15 @@
 
       const nama = document.getElementById("studentName").value.trim();
       const kelasTerpilih = Array.from(document.querySelectorAll('input[name="kelasPilihan"]:checked')).map((el) => el.value);
-      const paket = ambilPaketTerpilih();
+      const paketIdx = parseInt(document.getElementById("paketSelect").value, 10);
 
-      if (!nama || kelasTerpilih.length === 0 || !paket) {
+      if (!nama || kelasTerpilih.length === 0) {
         alert("Mohon lengkapi Nama Lengkap dan pilih minimal satu Kelas terlebih dahulu.");
         return;
       }
 
-      if (sudahPernahMengerjakan(nama, paket)) {
-        alert("Nama siswa ini sudah pernah mengerjakan paket soal ini. Satu nama hanya boleh mengerjakan satu kali per mata pelajaran.");
+      if (sudahPernahMengerjakan(nama)) {
+        alert("Nama siswa ini sudah pernah mengerjakan soal. Satu nama hanya boleh mengerjakan satu kali.");
         return;
       }
 
@@ -2929,6 +2916,9 @@
         simpanKritikSaran(kritikAwal.value, "Beranda");
         kritikAwal.value = "";
       }
+
+      const paketList = ambilSemuaPaket();
+      const paket = paketList[paketIdx] || paketList[0];
 
       if (isPaketDikunci(paket.id)) {
         alert("Paket soal ini sedang dikunci oleh guru. Silakan pilih paket soal yang sudah dibuka.");
@@ -2941,7 +2931,6 @@
         active: true,
         submitted: false,
         student: { nama, kelas },
-        paketId: paket.id,
         paketJudul: paket.judul,
         questions: siapkanSoalTeracak(paket),
         answers: {},
@@ -3108,19 +3097,133 @@
       const pesan = terjawab < total
         ? `Masih ada ${total - terjawab} soal yang belum dijawab. Yakin ingin mengumpulkan ujian sekarang?`
         : "Yakin ingin mengumpulkan semua jawaban ujian?";
-      document.getElementById("submitModalMessage").textContent = pesan;
-      document.getElementById("submitModal").classList.remove("hidden");
+      const yakin = confirm(pesan);
+      setTimeout(() => {
+        sedangMengumpulkan = false;
+      }, 600);
+      if (yakin) {
+        selesaikanUjian("Jawaban berhasil dikumpulkan.");
+      }
     }
 
-    function tutupModalKonfirmasiSelesai() {
-      document.getElementById("submitModal").classList.add("hidden");
-      sedangMengumpulkan = false;
+    const STORAGE_KEY_CENTRAL_URL = "ujianku_lite_central_endpoint_v1";
+    const STORAGE_KEY_CENTRAL_QUEUE = "ujianku_lite_central_queue_v1";
+    const DEFAULT_CENTRAL_ENDPOINT = "TEMPEL_URL_WEB_APP_APPS_SCRIPT_ANDA_DISINI";
+
+    function ambilEndpointPusat() {
+      try {
+        const saved = (localStorage.getItem(STORAGE_KEY_CENTRAL_URL) || "").trim();
+        return saved || DEFAULT_CENTRAL_ENDPOINT.trim();
+      } catch (e) {
+        return DEFAULT_CENTRAL_ENDPOINT.trim();
+      }
     }
 
-    function prosesKumpulkanSekarang() {
-      document.getElementById("submitModal").classList.add("hidden");
-      selesaikanUjian("Jawaban berhasil dikumpulkan.");
-      sedangMengumpulkan = false;
+    function ambilAntreanPusat() {
+      try {
+        const q = JSON.parse(localStorage.getItem(STORAGE_KEY_CENTRAL_QUEUE) || "[]");
+        return Array.isArray(q) ? q : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function simpanAntreanPusat(q) {
+      try {
+        localStorage.setItem(STORAGE_KEY_CENTRAL_QUEUE, JSON.stringify(q));
+      } catch (e) {}
+    }
+
+    function perbaruiInfoPusatAdmin() {
+      const input = document.getElementById("centralEndpointInput");
+      const info = document.getElementById("centralStatusInfo");
+      const queue = ambilAntreanPusat();
+      const btnQueue = document.querySelector('button[onclick="kirimAntreanTertunda()"]');
+      if (input) {
+        input.value = ambilEndpointPusat();
+      }
+      if (btnQueue) {
+        btnQueue.textContent = `Kirim Antrean Gagal (${queue.length})`;
+      }
+      if (info) {
+        const url = ambilEndpointPusat();
+        info.textContent = url
+          ? `Endpoint aktif terpasang (hanya dapat diubah melalui menu Admin). Antrean tertunda: ${queue.length} data.`
+          : `Endpoint belum diisi. Isi URL Web App di atas jika ingin mengirim data ke satu server/spreadsheet terpusat.`;
+      }
+    }
+
+    function simpanKonfigurasiPusat() {
+      const input = document.getElementById("centralEndpointInput");
+      if (!input) return;
+      const val = input.value.trim();
+      if (val && !/^https?:\/\//i.test(val)) {
+        alert("URL endpoint harus diawali dengan http:// atau https://");
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_CENTRAL_URL, val);
+      perbaruiInfoPusatAdmin();
+      alert("Konfigurasi penyimpanan terpusat berhasil disimpan.");
+      if (val) {
+        kirimAntreanTertunda();
+      }
+    }
+
+    function kirimPayloadKePusat(payload) {
+      const endpoint = ambilEndpointPusat();
+      if (!endpoint) return Promise.resolve(false);
+
+      const packet = {
+        secret: TEACHER_PIN,
+        school: "SD Negeri 37 Kendari",
+        sentAt: new Date().toISOString(),
+        ...payload
+      };
+
+      return fetch(endpoint, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(packet)
+      })
+        .then(() => true)
+        .catch(() => {
+          const q = ambilAntreanPusat();
+          q.push(packet);
+          simpanAntreanPusat(q);
+          perbaruiInfoPusatAdmin();
+          return false;
+        });
+    }
+
+    function kirimAntreanTertunda() {
+      const endpoint = ambilEndpointPusat();
+      const q = ambilAntreanPusat();
+      if (!endpoint) {
+        alert("URL endpoint belum diatur.");
+        return;
+      }
+      if (q.length === 0) {
+        perbaruiInfoPusatAdmin();
+        return;
+      }
+      simpanAntreanPusat([]);
+      Promise.all(
+        q.map((item) =>
+          fetch(endpoint, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(item)
+          }).catch(() => {
+            const cur = ambilAntreanPusat();
+            cur.push(item);
+            simpanAntreanPusat(cur);
+          })
+        )
+      ).then(() => {
+        perbaruiInfoPusatAdmin();
+      });
     }
 
     function selesaikanUjian(keterangan) {
@@ -3153,7 +3256,6 @@
         waktu: waktuCatat,
         nama: state.student.nama,
         kelas: state.student.kelas,
-        paketId: state.paketId || "",
         paket: state.paketJudul,
         benar,
         total,
@@ -3162,8 +3264,8 @@
       };
 
       simpanRekapKeStorage(entriRekap);
+      kirimPayloadKePusat({ type: "rekap", data: entriRekap });
 
-      document.getElementById("submitModal").classList.add("hidden");
       document.getElementById("examTopbar").classList.add("hidden");
       document.getElementById("examView").classList.add("hidden");
       document.getElementById("resultView").classList.remove("hidden");
@@ -3277,6 +3379,16 @@
       }, "image/jpeg", 0.92);
     }
 
+    function salinFallback(teks) {
+      const ta = document.createElement("textarea");
+      ta.value = teks;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Bukti hasil ujian berhasil disalin!");
+    }
+
     function kembaliKeBeranda() {
       document.getElementById("resultView").classList.add("hidden");
       document.getElementById("loginView").classList.remove("hidden");
@@ -3323,11 +3435,12 @@
     }
 
     function updateStatusPaketTerpilih() {
-      const paket = ambilPaketTerpilih();
+      const select = document.getElementById("paketSelect");
+      const paketList = ambilSemuaPaket();
+      const paket = paketList[parseInt(select.value, 10)] || paketList[0];
       const infoEl = document.getElementById("paketLockInfo");
       const btnMulai = document.getElementById("mulaiUjianBtn");
       if (!paket) return;
-      renderPilihanNama();
 
       if (isPaketDikunci(paket.id)) {
         infoEl.classList.remove("hidden");
@@ -3405,6 +3518,7 @@
       tutupModalGuru();
       document.getElementById("loginView").classList.add("hidden");
       document.getElementById("teacherView").classList.remove("hidden");
+      perbaruiInfoPusatAdmin();
       renderKontrolKunciGuru();
       renderDaftarKritik();
       muatTextareaNamaAdmin();
@@ -3537,6 +3651,8 @@
       }
     });
 
+    let fullscreenPromptedThisExit = false;
+
     function paksaMasukFullscreenDariGestur() {
       if (!state.active || state.submitted) return;
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
@@ -3576,8 +3692,11 @@
     document.addEventListener("fullscreenchange", () => {
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
       if (!isFs && state.active && !state.submitted && !sedangMengumpulkan) {
+        fullscreenPromptedThisExit = true;
         kunciRiwayatBrowser();
         catatPelanggaran("Keluar dari mode layar penuh (Fullscreen) — ketuk layar/soal untuk masuk kembali.");
+      } else if (isFs) {
+        fullscreenPromptedThisExit = false;
       }
     });
 
