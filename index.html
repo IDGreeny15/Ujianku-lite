@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>UjianKu Lite - Mode Anti-Cheat</title>
+  <title>SD Negeri 37 Kendari</title>
   <style>
     :root {
       --bg: #f1f5f9;
@@ -447,13 +447,13 @@
     <!-- ==================== HALAMAN LOGIN / BERANDA ==================== -->
     <div id="loginView">
       <div class="header">
-        <div class="brand">UjianKu Lite</div>
-        <button class="btn btn-outline btn-sm" onclick="bukaModalGuru()">Panel Guru</button>
+        <div class="brand">SD Negeri 37 Kendari</div>
+        <button class="btn btn-outline btn-sm" onclick="bukaModalGuru()">Admin</button>
       </div>
 
       <div class="card">
-        <h1>Masuk Ujian</h1>
-        <p>Aplikasi ringan tanpa login akun Google. Pastikan HP dalam kondisi siap sebelum memulai.</p>
+        <h1>Asesmen Akhir Semester</h1>
+        <p>Aplikasi ini dikembangka oleh Aljody Pahlevi Naslim, S.Pd., Harap dipahami masih terdapat banyak 'bug', mohon batrei HP dalam keadaan full dan memiliki kuota.</p>
 
         <div id="portalLockBanner" class="lock-notice hidden">
           Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.
@@ -469,19 +469,19 @@
             <label>Pilih Kelas</label>
             <div class="checkbox-group" id="kelasCheckboxGroup">
               <label class="checkbox-item">
-                <input type="checkbox" name="kelasPilihan" value="Kelas IV A" />
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV A" onchange="pilihSatuKelas(this)" />
                 <span>Kelas IV A</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" name="kelasPilihan" value="Kelas IV B" />
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV B" onchange="pilihSatuKelas(this)" />
                 <span>Kelas IV B</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" name="kelasPilihan" value="Kelas IV C" />
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV C" onchange="pilihSatuKelas(this)" />
                 <span>Kelas IV C</span>
               </label>
               <label class="checkbox-item">
-                <input type="checkbox" name="kelasPilihan" value="Kelas IV D" />
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV D" onchange="pilihSatuKelas(this)" />
                 <span>Kelas IV D</span>
               </label>
             </div>
@@ -557,7 +557,7 @@
     <!-- ==================== HALAMAN PANEL GURU ==================== -->
     <div id="teacherView" class="hidden">
       <div class="header">
-        <div class="brand">Panel Guru</div>
+        <div class="brand">Admin</div>
         <button class="btn btn-outline btn-sm" onclick="keluarPanelGuru()">Tutup Panel</button>
       </div>
 
@@ -619,7 +619,7 @@
   <!-- Modal PIN Guru -->
   <div id="pinModal" class="modal-backdrop hidden">
     <div class="modal-card">
-      <h3>Akses Panel Guru</h3>
+      <h3>Akses Admin</h3>
       <p>Masukkan PIN guru (default: <strong>1234</strong>).</p>
       <div class="form-group">
         <input type="password" id="teacherPinInput" placeholder="Masukkan PIN" inputmode="numeric" />
@@ -640,7 +640,7 @@
     const PAKET_BAWAAN = [
       {
             "id": "mulok-bahasa-tolaki-kelas4",
-            "judul": "Mulok Bahasa Tolaki Kelas IV (Semester 1)",
+            "judul": "soal mulok",
             "durasiMenit": 45,
             "soal": [
                   {
@@ -947,7 +947,7 @@
       },
       {
             "id": "sbdp-kelas4-bab1-2",
-            "judul": "Seni Budaya Kelas IV - Bab 1 & 2",
+            "judul": "soal sbdp",
             "durasiMenit": 45,
             "soal": [
                   {
@@ -1186,3 +1186,2062 @@
                               "8 nada",
                               "7 nada",
                               "5 nada",
+                              "6 nada"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Pada tangga nada diatonis mayor (C - D - E - F - G - A - B - C'), pasangan nada yang berjarak 1/2 nada adalah ....",
+                        "opsi": [
+                              "E ke F",
+                              "D ke E",
+                              "C ke D",
+                              "G ke A"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Jarak nada antara tuts hitam dan tuts putih yang berdekatan pada alat musik piano bernilai ....",
+                        "opsi": [
+                              "2 nada",
+                              "1 nada",
+                              "1/2 nada",
+                              "1 1/2 nada"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Nama interval nada dari nada mi ke nada la (berjarak empat nada) disebut ....",
+                        "opsi": [
+                              "kuart",
+                              "terts",
+                              "kwint",
+                              "sekst"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Perpaduan tiga nada yang membentuk akor G Mayor adalah ....",
+                        "opsi": [
+                              "do, mi, dan sol",
+                              "sol, si, dan la",
+                              "fa, la, dan do",
+                              "sol, si, dan re"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Kelompok alat musik berikut yang seluruhnya merupakan alat musik ritmis adalah ....",
+                        "opsi": [
+                              "saksofon, kolintang, dan piano",
+                              "kastanyet, saksofon, dan marakas",
+                              "kastanyet, marakas, dan simbal",
+                              "kolintang, pianika, dan gitar"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Rebana, tifa, dan kendang merupakan contoh alat musik ritmis yang dimainkan dengan cara ....",
+                        "opsi": [
+                              "dipetik",
+                              "dipukul",
+                              "ditiup",
+                              "digesek"
+                        ],
+                        "jawaban": 1
+                  }
+            ]
+      },
+      {
+            "id": "pendidikan-pancasila-kelas4-bab1-2",
+            "judul": "soal pend pancasila",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Wilayah lingkungan tempat tinggal yang terdiri atas beberapa Rukun Tetangga (RT) disebut ....",
+                        "opsi": [
+                              "Provinsi",
+                              "Rukun Warga (RW)",
+                              "Kecamatan",
+                              "Kabupaten"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Semboyan Negara Kesatuan Republik Indonesia yang tertulis pada pita yang dicengkeram Burung Garuda adalah ....",
+                        "opsi": [
+                              "Bhinneka Tunggal Ika",
+                              "Bersatu Kita Teguh",
+                              "Tut Wuri Handayani",
+                              "Ing Ngarsa Sung Tuladha"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Tari mandau merupakan tarian tradisional yang berasal dari suku Dayak di daerah ....",
+                        "opsi": [
+                              "Kalimantan Tengah",
+                              "Jawa Timur",
+                              "Sulawesi Tengah",
+                              "Maluku Barat Daya"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Suku dan bahasa daerah asli dari masyarakat Jakarta yang terkenal dengan makanan kerak telor dan ondel-ondel adalah ....",
+                        "opsi": [
+                              "Betawi",
+                              "Ambon",
+                              "Sunda",
+                              "Melayu"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Alat musik tradisional dari Maluku yang digunakan untuk mengiringi tari cakalele adalah ....",
+                        "opsi": [
+                              "tifa dan suling",
+                              "gamelan dan kendang",
+                              "angklung dan rebana",
+                              "sasando dan kolintang"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Tradisi Fahombo atau lompat batu merupakan ciri khas seni dan budaya masyarakat daerah ....",
+                        "opsi": [
+                              "Lombok",
+                              "Ponorogo",
+                              "Nias",
+                              "Bali"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Pada kegiatan 'Grebek Sampah' di Desa Bineka, sampah sisa makanan dan dedaunan kering dimasukkan ke dalam kantong sampah ....",
+                        "opsi": [
+                              "kimia",
+                              "organik",
+                              "anorganik",
+                              "plastik"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Makanan pokok masyarakat Kampung Adat Cireundeu di Cimahi adalah ....",
+                        "opsi": [
+                              "nasi putih",
+                              "ketela atau singkong",
+                              "sagu bakar",
+                              "roti gandum"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Petugas adat di Bali yang ikut membantu mengamankan pelaksanaan salat Idul Adha sebagai wujud toleransi disebut ....",
+                        "opsi": [
+                              "Pecalang",
+                              "Kepala Dusun",
+                              "Satpam",
+                              "Hansip"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Perpaduan budaya Tionghoa dengan budaya Jawa di Solo diwujudkan dalam tradisi ....",
+                        "opsi": [
+                              "Reog Ponorogo",
+                              "Grebeg Sudiro",
+                              "Tari Mandau",
+                              "Tradisi Nyadran"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Pemimpin pemerintahan di tingkat desa yang dipilih secara langsung oleh penduduk desa adalah ....",
+                        "opsi": [
+                              "Camat",
+                              "Lurah",
+                              "Bupati",
+                              "Kepala Desa"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Pemimpin pemerintahan di tingkat kelurahan yang merupakan Pegawai Negeri Sipil (PNS) dan diangkat oleh bupati atau wali kota adalah ....",
+                        "opsi": [
+                              "Kepala Desa",
+                              "Kepala Dusun",
+                              "Lurah",
+                              "Ketua BPD"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Lembaga di desa yang anggotanya terdiri dari perwakilan masyarakat tiap dusun untuk membahas rancangan peraturan desa bersama kepala desa adalah ....",
+                        "opsi": [
+                              "Kelompok Jabatan Fungsional",
+                              "Karang Taruna",
+                              "Badan Permusyawaratan Desa (BPD)",
+                              "Rukun Tetangga"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Contoh kenampakan lingkungan alam di sekitar wilayah desa atau kelurahan adalah ....",
+                        "opsi": [
+                              "pegunungan dan sungai",
+                              "puskesmas dan pasar",
+                              "taman bermain dan jembatan",
+                              "kantor desa dan sekolah"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Contoh kenampakan lingkungan buatan yang berfungsi sebagai fasilitas umum bagi warga adalah ....",
+                        "opsi": [
+                              "sungai dan danau",
+                              "gunung dan lembah",
+                              "hutan dan pantai",
+                              "puskesmas dan tempat ibadah"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Ketentuan yang dibuat untuk mengatur perilaku atau perbuatan kita agar tercipta ketertiban disebut ....",
+                        "opsi": [
+                              "cita-cita",
+                              "hak",
+                              "peraturan",
+                              "hadiah"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Aturan yang berlaku di lingkungan keluarga umumnya bersifat ....",
+                        "opsi": [
+                              "berisi denda uang bagi yang melanggar",
+                              "tertulis dan dibuat oleh pemerintah pusat",
+                              "tidak tertulis dan disepakati anggota keluarga",
+                              "hanya berlaku untuk tamu yang datang"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Jika ada tamu yang menginap di lingkungan masyarakat lebih dari 1 x 24 jam, maka wajib melapor kepada ....",
+                        "opsi": [
+                              "Dokter Puskesmas",
+                              "Kepala Sekolah",
+                              "Ketua RT setempat",
+                              "Penjaga Pasar"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Setiap warga negara Indonesia yang telah berusia 17 tahun wajib memiliki kartu identitas diri berupa ....",
+                        "opsi": [
+                              "Kartu Perpustakaan",
+                              "Kartu Keluarga",
+                              "Kartu Tanda Penduduk (KTP)",
+                              "Kartu Pelajar"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Tempat yang tepat untuk menyeberang jalan raya sesuai aturan lalu lintas adalah ....",
+                        "opsi": [
+                              "zebra cross atau jembatan penyeberangan",
+                              "trotoar jalan",
+                              "jalur khusus sepeda",
+                              "tengah jalan raya yang ramai"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Aturan yang harus dipatuhi ketika berada di ruang tunggu rumah sakit adalah ....",
+                        "opsi": [
+                              "mengambil nomor antrean dan duduk tertib menunggu panggilan",
+                              "langsung masuk ke ruang dokter tanpa dipanggil",
+                              "makan dan minum sambil berteriak",
+                              "berlari-lari dan bercanda dengan keras"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Sikap sopan yang dilakukan Dewi saat mengantarkan kue ke rumah tetangganya adalah ....",
+                        "opsi": [
+                              "meletakkan kue di depan pintu lalu pergi",
+                              "berteriak memanggil dari luar pagar",
+                              "langsung masuk ke ruang tamu tanpa izin",
+                              "mengetuk pintu dan mengucapkan salam terlebih dahulu"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Hukuman yang diberikan kepada seseorang yang melakukan pelanggaran terhadap peraturan disebut ....",
+                        "opsi": [
+                              "hadiah",
+                              "pujian",
+                              "imbalan",
+                              "sanksi"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Dalam cerita 'Alasan Melanggar Aturan', pelanggaran tata tertib sekolah yang dilakukan Made adalah ....",
+                        "opsi": [
+                              "datang terlambat ke sekolah",
+                              "rambutnya panjang dan belum dirapikan",
+                              "tidak memakai sepatu hitam",
+                              "membuang sampah sembarangan"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Sebaiknya peserta didik tiba di sekolah sebelum bel tanda masuk berbunyi selama ....",
+                        "opsi": [
+                              "5 detik",
+                              "15 menit",
+                              "1 menit",
+                              "60 menit"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Segala sesuatu yang harus diterima atau dimiliki oleh setiap manusia disebut ....",
+                        "opsi": [
+                              "sanksi",
+                              "hak",
+                              "larangan",
+                              "kewajiban"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Sesuatu yang harus dikerjakan atau dilaksanakan dengan penuh tanggung jawab disebut ....",
+                        "opsi": [
+                              "hadiah",
+                              "hak",
+                              "keinginan",
+                              "kewajiban"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Berikut ini yang merupakan contoh hak anak di lingkungan rumah adalah ....",
+                        "opsi": [
+                              "memakai seragam sekolah yang ditentukan",
+                              "mendapatkan kasih sayang dan perlindungan dari orang tua",
+                              "membantu orang tua membersihkan rumah",
+                              "membereskan mainan setelah selesai bermain"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Contoh kewajiban peserta didik di lingkungan sekolah adalah ....",
+                        "opsi": [
+                              "mendapatkan pelajaran dari guru",
+                              "bertanya kepada guru jika belum paham",
+                              "mendapatkan kasih sayang orang tua",
+                              "mengikuti upacara bendera dengan tertib dan memakai seragam rapi"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Cara pengambilan keputusan bersama di kelas atau masyarakat yang sesuai dengan prinsip demokrasi Pancasila sila keempat adalah ....",
+                        "opsi": [
+                              "memutuskan sendiri secara sepihak",
+                              "mengundi tanpa berdiskusi",
+                              "bertengkar sampai ada yang menang",
+                              "musyawarah"
+                        ],
+                        "jawaban": 3
+                  }
+            ]
+      },
+      {
+            "id": "bahasa-indonesia-kelas4-bab1-4",
+            "judul": "soal bhs indonesia",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Dalam cerita 'Tak Muat Lagi', baju favorit Lala yang dipakai oleh adiknya Kiki berwarna ....",
+                        "opsi": [
+                              "hijau polos",
+                              "kuning bergaris",
+                              "biru polkadot",
+                              "merah muda"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Alasan baju biru polkadot Lala sobek saat dicoba kembali adalah karena ....",
+                        "opsi": [
+                              "kain bajunya sudah sangat lapuk",
+                              "tubuh Lala sudah bertambah besar sehingga bajunya kekecilan",
+                              "digunting oleh Kiki saat bermain",
+                              "tersangkut paku di lemari pakaian"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kalimat yang memerlukan objek agar menjadi kalimat yang lengkap dan benar disebut kalimat ....",
+                        "opsi": [
+                              "transitif",
+                              "majemuk",
+                              "persuasif",
+                              "intransitif"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Berikut ini yang merupakan contoh kalimat intransitif (tidak memerlukan objek) adalah ....",
+                        "opsi": [
+                              "Lani memetik jambu.",
+                              "Kiki menyodorkan segelas air.",
+                              "Lani menangis.",
+                              "Yopi menyanyikan lagu Indonesia Raya."
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Pada kalimat 'Lani memetik jambu', kata yang berkedudukan sebagai objek adalah ....",
+                        "opsi": [
+                              "Lani",
+                              "memetik",
+                              "Lani memetik",
+                              "jambu"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Ketakutan yang sangat berlebihan terhadap benda atau keadaan tertentu yang dapat menghambat kehidupan penderitanya disebut ....",
+                        "opsi": [
+                              "fobia",
+                              "alergi",
+                              "terapi",
+                              "panik"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Dalam teks 'Fobia', ketakutan yang sangat berlebihan terhadap laba-laba disebut ....",
+                        "opsi": [
+                              "ofidiofobia",
+                              "koulrofobia",
+                              "arakhnofobia",
+                              "astrafobia"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Susunan daftar kata di dalam Kamus Besar Bahasa Indonesia (KBBI) cetak diurutkan berdasarkan ....",
+                        "opsi": [
+                              "panjang kata",
+                              "abjad",
+                              "kelas kata",
+                              "jumlah suku kata"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Dalam cerita 'Kepala Suku Len', nama kucing peliharaan Tigor yang takut air adalah ....",
+                        "opsi": [
+                              "Tiur",
+                              "Siregar",
+                              "Molen",
+                              "Sukulen"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Tanaman kecil berdaun tebal milik Kak Tiur yang tidak boleh sering disiram air bernama ....",
+                        "opsi": [
+                              "mawar",
+                              "singkong",
+                              "anggrek",
+                              "sukulen"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Kata yang sama lafal dan ejaannya, tetapi berbeda maknanya (seperti kata 'kabur' dan 'bisa') disebut ....",
+                        "opsi": [
+                              "sinonim",
+                              "akronim",
+                              "homonim",
+                              "antonim"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kata dasar 'siram' jika diberi imbuhan awalan 'me-' akan berubah menjadi ....",
+                        "opsi": [
+                              "menyiram",
+                              "mengsiram",
+                              "mesiram",
+                              "mensiram"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata dasar 'tiup' jika diberi awalan 'me-' akan luluh menjadi ....",
+                        "opsi": [
+                              "metiup",
+                              "mengtiup",
+                              "mentiup",
+                              "meniup"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Dalam cerita 'Ada Vampir di Rumah Ini', benda yang dimaksud sebagai 'vampir' oleh Kak Lita adalah alat elektronik yang ....",
+                        "opsi": [
+                              "rusak dan tidak bisa menyala lagi",
+                              "menggunakan baterai sekali pakai",
+                              "memiliki bentuk seperti kelelawar hitam",
+                              "kabelnya tetap tertancap di stopkontak meski sudah dimatikan"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Pencocok yang dipasang pada ujung kabel listrik yang ditusukkan ke stopkontak disebut ....",
+                        "opsi": [
+                              "meteran",
+                              "steker",
+                              "sekring",
+                              "sakelar"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata hubung (konjungsi) pada kalimat majemuk setara yang berfungsi menghubungkan dua situasi yang berlawanan adalah ....",
+                        "opsi": [
+                              "karena",
+                              "sehingga",
+                              "dan",
+                              "tetapi"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Tanda atau lambang di jalan raya yang berguna memberikan peringatan, larangan, perintah, dan petunjuk bagi pemakai jalan disebut ....",
+                        "opsi": [
+                              "papan reklame",
+                              "denah jalan",
+                              "marka parkir",
+                              "rambu lalu lintas"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Ketika lampu lalu lintas menyala merah, maka pengendara kendaraan harus ....",
+                        "opsi": [
+                              "melaju kencang",
+                              "berhenti",
+                              "berbelok ke kiri",
+                              "membunyikan klakson"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Alat keselamatan yang wajib dipakai di kepala saat mengendarai sepeda motor adalah ....",
+                        "opsi": [
+                              "helm",
+                              "topi",
+                              "kacamata",
+                              "masker"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Paragraf yang berisi pendapat atau keyakinan yang disertai alasan dan bukti untuk meyakinkan orang lain disebut paragraf ....",
+                        "opsi": [
+                              "persuasi",
+                              "argumentasi",
+                              "narasi",
+                              "deskripsi"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Berdasarkan tempat pemakaiannya, contoh kendaraan yang digunakan di perairan adalah ....",
+                        "opsi": [
+                              "sampan dan kapal",
+                              "kereta api dan truk",
+                              "helikopter dan pesawat",
+                              "delman dan pedati"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata dasar 'ajar' jika diberi imbuhan awalan 'ber-' akan berubah bentuk menjadi ....",
+                        "opsi": [
+                              "beajar",
+                              "belajar",
+                              "berlajar",
+                              "berajar"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata dasar 'rambut' jika diberi imbuhan awalan 'ber-' penulisan yang benar adalah ....",
+                        "opsi": [
+                              "belambut",
+                              "merambut",
+                              "berambut",
+                              "berrambut"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Tari seblang yang penarinya menutupi wajah dengan daun kelapa berasal dari daerah ....",
+                        "opsi": [
+                              "Banyuwangi, Jawa Timur",
+                              "Gigieng, Aceh",
+                              "Cempaga, Bali",
+                              "Situraja, Jawa Barat"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Tarian tradisional dari Aceh yang dibawakan oleh delapan pemuda sebagai sarana dakwah dan pertunjukan adalah tari ....",
+                        "opsi": [
+                              "seudati",
+                              "baris",
+                              "baksa kembang",
+                              "umbul"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Hal utama atau gagasan utama yang ingin disampaikan dalam sebuah paragraf disebut ....",
+                        "opsi": [
+                              "ide pendukung",
+                              "kata kunci",
+                              "ide pokok",
+                              "kalimat penjelas"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kalimat pada poster yang bersifat mengajak, membujuk, atau mengimbau pembaca disebut kalimat ....",
+                        "opsi": [
+                              "berita",
+                              "persuasif",
+                              "intransitif",
+                              "tanya"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kegiatan tanya jawab antara dua orang atau lebih dengan tujuan mencari informasi tertentu disebut ....",
+                        "opsi": [
+                              "pidato",
+                              "wawancara",
+                              "membaca nyaring",
+                              "diskusi"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Orang yang menjawab pertanyaan dalam kegiatan wawancara disebut ....",
+                        "opsi": [
+                              "narasumber",
+                              "pewawancara",
+                              "pendengar",
+                              "penulis"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Jenis majas kiasan yang mengumpamakan benda mati seolah-olah dapat bertingkah laku seperti manusia disebut majas ....",
+                        "opsi": [
+                              "metafora",
+                              "asosiasi",
+                              "hiperbola",
+                              "personifikasi"
+                        ],
+                        "jawaban": 3
+                  }
+            ]
+      },
+      {
+            "id": "ipas-kelas4-bab1-4",
+            "judul": "soal ipas",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Bagian tubuh tumbuhan yang berfungsi menyerap air dan nutrisi dari dalam tanah adalah ....",
+                        "opsi": [
+                              "buah",
+                              "bunga",
+                              "daun",
+                              "akar"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Bagian tubuh tumbuhan yang berperan menyalurkan air dan makanan ke seluruh bagian tumbuhan adalah ....",
+                        "opsi": [
+                              "akar",
+                              "batang",
+                              "biji",
+                              "bunga"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Tempat tumbuhan membuat makanannya sendiri melalui proses fotosintesis adalah ....",
+                        "opsi": [
+                              "daun",
+                              "bunga",
+                              "batang",
+                              "akar"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Zat berwarna hijau pada daun yang berfungsi menangkap cahaya matahari untuk fotosintesis disebut ....",
+                        "opsi": [
+                              "oksigen",
+                              "karbon dioksida",
+                              "klorofil",
+                              "karbohidrat"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Gas yang dihasilkan oleh tumbuhan pada proses fotosintesis dan dibutuhkan manusia untuk bernapas adalah ....",
+                        "opsi": [
+                              "nitrogen",
+                              "oksigen",
+                              "karbon dioksida",
+                              "uap air"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Alat perkembangbiakan pada tumbuhan berbunga adalah ....",
+                        "opsi": [
+                              "daun dan ranting",
+                              "benang sari dan putik",
+                              "mahkota dan kelopak",
+                              "akar dan batang"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Peristiwa menempelnya serbuk sari di kepala putik disebut ....",
+                        "opsi": [
+                              "fotosintesis",
+                              "penyerbukan",
+                              "penyebaran",
+                              "penguapan"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Contoh tanaman yang menyimpan cadangan makanannya sebagai umbi akar adalah ....",
+                        "opsi": [
+                              "wortel dan singkong",
+                              "padi dan jagung",
+                              "kentang dan ubi jalar",
+                              "mangga dan apel"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Segala sesuatu yang memiliki massa dan menempati ruang disebut ....",
+                        "opsi": [
+                              "gaya",
+                              "kalor",
+                              "energi",
+                              "materi"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Wujud zat yang memiliki bentuk dan volume relatif tetap meskipun dipindahkan ke wadah berbeda adalah zat ....",
+                        "opsi": [
+                              "uap",
+                              "cair",
+                              "padat",
+                              "gas"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Sifat benda cair jika dituangkan ke dalam wadah yang berbeda-beda adalah ....",
+                        "opsi": [
+                              "bentuknya selalu tetap",
+                              "bentuknya berubah mengikuti wadahnya",
+                              "tidak dapat mengalir",
+                              "volumenya selalu bertambah"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Perubahan wujud benda dari padat menjadi cair karena menerima panas disebut ....",
+                        "opsi": [
+                              "membeku",
+                              "mengembun",
+                              "menguap",
+                              "mencair"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Perubahan wujud air menjadi es batu di dalam lemari pendingin disebut ....",
+                        "opsi": [
+                              "membeku",
+                              "menyublim",
+                              "mencair",
+                              "menguap"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Perubahan wujud benda cair menjadi gas saat air dipanaskan hingga mendidih disebut ....",
+                        "opsi": [
+                              "menguap",
+                              "deposisi",
+                              "membeku",
+                              "mengembun"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Perubahan wujud benda dari gas menjadi cair disebut ....",
+                        "opsi": [
+                              "mengembun",
+                              "menguap",
+                              "mencair",
+                              "sublimasi"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kapur barus yang dipanaskan lama-kelamaan mengecil dan berubah menjadi gas. Peristiwa ini disebut ....",
+                        "opsi": [
+                              "deposisi",
+                              "mengembun",
+                              "membeku",
+                              "sublimasi"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Interaksi pada benda dalam bentuk tarikan atau dorongan yang dapat menggerakkan benda disebut ....",
+                        "opsi": [
+                              "massa",
+                              "suhu",
+                              "gaya",
+                              "volume"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Saat mendorong meja atau menarik tali, gaya yang dikeluarkan oleh tubuh manusia disebut gaya ....",
+                        "opsi": [
+                              "gravitasi",
+                              "pegas",
+                              "magnet",
+                              "otot"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Gaya yang timbul akibat dua permukaan benda saling bersentuhan dan arahnya berlawanan dengan arah gerak benda adalah gaya ....",
+                        "opsi": [
+                              "gesek",
+                              "pegas",
+                              "listrik",
+                              "magnet"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Jika dua kutub magnet yang sama didekatkan, maka yang akan terjadi adalah ....",
+                        "opsi": [
+                              "tarik-menarik",
+                              "menempel kuat",
+                              "tolak-menolak",
+                              "diam saja"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Contoh benda yang dapat ditarik oleh magnet adalah ....",
+                        "opsi": [
+                              "kayu dan kain",
+                              "kertas dan plastik",
+                              "paku dan jarum besi",
+                              "pensil dan penghapus"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Benda elastis seperti karet gelang dan busur panah menghasilkan gaya ....",
+                        "opsi": [
+                              "gesek",
+                              "gravitasi",
+                              "magnet",
+                              "pegas"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Gaya yang menarik benda-benda di Bumi menuju ke inti Bumi sehingga kita tidak melayang di udara adalah gaya ....",
+                        "opsi": [
+                              "otot",
+                              "gravitasi",
+                              "gesek",
+                              "pegas"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Perubahan bentuk energi dari satu bentuk ke bentuk energi lainnya disebut ....",
+                        "opsi": [
+                              "energi kinetik",
+                              "gaya gesek",
+                              "transformasi energi",
+                              "energi potensial"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Perubahan energi yang terjadi pada lampu listrik saat dinyalakan adalah ....",
+                        "opsi": [
+                              "energi listrik menjadi energi cahaya",
+                              "energi kimia menjadi energi gerak",
+                              "energi gerak menjadi energi bunyi",
+                              "energi panas menjadi energi listrik"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Saat seseorang bermain gitar dengan memetik senarnya, terjadi perubahan energi gerak menjadi energi ....",
+                        "opsi": [
+                              "kimia",
+                              "cahaya",
+                              "bunyi",
+                              "listrik"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Alat berbentuk papan yang berfungsi mengubah energi cahaya matahari menjadi energi listrik adalah ....",
+                        "opsi": [
+                              "turbin air",
+                              "panel surya",
+                              "generator",
+                              "termometer"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Energi yang tersimpan pada suatu benda disebut energi ....",
+                        "opsi": [
+                              "bunyi",
+                              "potensial",
+                              "cahaya",
+                              "kinetik"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Makanan yang kita makan dan baterai menyimpan energi potensial dalam bentuk energi ....",
+                        "opsi": [
+                              "listrik",
+                              "pegas",
+                              "bunyi",
+                              "kimia"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Energi yang disebabkan oleh adanya gerakan disebut energi ....",
+                        "opsi": [
+                              "kinetik",
+                              "kimia",
+                              "potensial",
+                              "pegas"
+                        ],
+                        "jawaban": 0
+                  }
+            ]
+      },
+      {
+            "id": "matematika-kelas4-bab1-4",
+            "judul": "soal matematika",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Lambang bilangan dari 'empat ribu tiga ratus dua puluh tujuh' adalah ....",
+                        "opsi": [
+                              "4.237",
+                              "4.372",
+                              "4.327",
+                              "3.427"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Bilangan 7.003 dibaca ....",
+                        "opsi": [
+                              "tujuh ribu tiga ratus",
+                              "tujuh ribu tiga",
+                              "tujuh ratus tiga",
+                              "tujuh ribu tiga puluh"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Pada bilangan 8.463, angka 6 menempati nilai tempat ....",
+                        "opsi": [
+                              "ribuan",
+                              "puluhan",
+                              "ratusan",
+                              "satuan"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Tanda perbandingan yang tepat untuk mengisi titik-titik pada 4.352 ... 4.365 adalah ....",
+                        "opsi": [
+                              ">",
+                              "≥",
+                              "=",
+                              "<"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Urutan bilangan 3.676, 2.460, dan 3.726 dari yang terkecil ke terbesar adalah ....",
+                        "opsi": [
+                              "2.460, 3.726, 3.676",
+                              "3.676, 2.460, 3.726",
+                              "2.460, 3.676, 3.726",
+                              "3.726, 3.676, 2.460"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Bentuk uraian (dekomposisi) dari bilangan 6.849 adalah ....",
+                        "opsi": [
+                              "6.000 + 800 + 40 + 9",
+                              "6.000 + 800 + 90 + 4",
+                              "6.000 + 400 + 80 + 9",
+                              "600 + 80 + 4 + 9"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Hasil dari penjumlahan 131 + 321 adalah ....",
+                        "opsi": [
+                              "452",
+                              "451",
+                              "552",
+                              "442"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Hasil dari perkalian 12 × 4 adalah ....",
+                        "opsi": [
+                              "52",
+                              "48",
+                              "44",
+                              "36"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Bilangan kelipatan 3 yang kurang dari 15 adalah ....",
+                        "opsi": [
+                              "3, 6, 9, 12, 15",
+                              "3, 6, 9, 12",
+                              "3, 5, 9, 12",
+                              "1, 3, 6, 9"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Sebuah pizza dipotong menjadi 4 bagian sama besar. Setiap potongan pizza bernilai pecahan ....",
+                        "opsi": [
+                              "4/1",
+                              "1/4",
+                              "1/3",
+                              "1/2"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Tanda perbandingan yang tepat untuk pecahan 1/2 ... 1/4 adalah ....",
+                        "opsi": [
+                              "=",
+                              ">",
+                              "<",
+                              "≤"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Tanda perbandingan yang tepat untuk pecahan 1/3 ... 2/3 adalah ....",
+                        "opsi": [
+                              "≥",
+                              ">",
+                              "=",
+                              "<"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Pecahan yang senilai dengan 1/3 adalah ....",
+                        "opsi": [
+                              "2/3",
+                              "1/6",
+                              "3/6",
+                              "2/6"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Bentuk pecahan desimal dari 3/10 adalah ....",
+                        "opsi": [
+                              "0,03",
+                              "3,0",
+                              "0,3",
+                              "0,33"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Bentuk pecahan desimal dari 25/100 adalah ....",
+                        "opsi": [
+                              "0,025",
+                              "2,5",
+                              "0,25",
+                              "25,0"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Bentuk persen dari pecahan desimal 0,75 adalah ....",
+                        "opsi": [
+                              "0,75%",
+                              "7,5%",
+                              "750%",
+                              "75%"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Bentuk pecahan desimal perseratusan dari 35% adalah ....",
+                        "opsi": [
+                              "0,35",
+                              "0,035",
+                              "35,0",
+                              "3,5"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Susunan kumpulan benda yang jumlahnya semakin ke kanan semakin banyak disebut pola gambar ....",
+                        "opsi": [
+                              "berulang",
+                              "membesar",
+                              "mengecil",
+                              "tetap"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Perhatikan pola bilangan berikut: 3, 5, 7, 9, 11, .... Bilangan selanjutnya adalah ....",
+                        "opsi": [
+                              "14",
+                              "15",
+                              "13",
+                              "12"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Perhatikan pola bilangan berikut: 1, 4, 7, 10, .... Bilangan berikutnya adalah ....",
+                        "opsi": [
+                              "13",
+                              "11",
+                              "14",
+                              "12"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Perhatikan pola bilangan berikut: 23, 18, 13, 8, .... Bilangan selanjutnya adalah ....",
+                        "opsi": [
+                              "4",
+                              "2",
+                              "3",
+                              "5"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Susunan bilangan 32, 28, 24, 20, 16 merupakan contoh pola bilangan ....",
+                        "opsi": [
+                              "acak",
+                              "ganda",
+                              "membesar",
+                              "mengecil"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Aturan selisih antarbilangan pada pola 20, 28, 36, 44, 52 adalah ....",
+                        "opsi": [
+                              "ditambah 8",
+                              "ditambah 10",
+                              "dikurang 8",
+                              "ditambah 6"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Benda berikut yang merupakan contoh satuan tidak baku untuk mengukur luas adalah ....",
+                        "opsi": [
+                              "sentimeter persegi",
+                              "meter persegi",
+                              "sentimeter kubik",
+                              "kertas origami"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Satuan baku yang digunakan untuk mengukur luas sebuah persegi dengan panjang sisi 1 cm adalah ....",
+                        "opsi": [
+                              "cm²",
+                              "cm³",
+                              "cm",
+                              "m"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Hubungan satuan luas yang benar antara meter persegi dan sentimeter persegi adalah 1 m² = ....",
+                        "opsi": [
+                              "1.000 cm²",
+                              "10.000 cm²",
+                              "100 cm²",
+                              "10 cm²"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Jika sebuah bangun datar tersusun rapat dari 13 persegi satuan berukuran 1 cm × 1 cm, maka luasnya adalah ....",
+                        "opsi": [
+                              "13 cm³",
+                              "13 cm",
+                              "26 cm²",
+                              "13 cm²"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Satuan volume baku yang umum digunakan untuk mengukur volume benda cair adalah ....",
+                        "opsi": [
+                              "liter dan mililiter",
+                              "meter dan kilometer",
+                              "kilogram dan gram",
+                              "sentimeter persegi dan meter persegi"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Volume kotak susu UHT 1.000 ml jika diubah ke dalam satuan liter menjadi ....",
+                        "opsi": [
+                              "1 liter",
+                              "10 liter",
+                              "0,1 liter",
+                              "100 liter"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Sebuah bangun ruang tersusun dari 9 kubus satuan yang masing-masing bervolume 1 cm³. Volume bangun tersebut adalah ....",
+                        "opsi": [
+                              "9 liter",
+                              "9 cm²",
+                              "9 cm³",
+                              "9 cm"
+                        ],
+                        "jawaban": 2
+                  }
+            ]
+      }
+    ];
+
+
+    let state = {
+      active: false,
+      submitted: false,
+      student: null,
+      paketJudul: "",
+      questions: [],
+      answers: {},
+      currentIndex: 0,
+      remainingSeconds: 0,
+      violations: 0,
+      lastViolationTime: 0,
+      timerId: null,
+      lastResultText: ""
+    };
+
+    function ambilSemuaPaket() {
+      try {
+        const extra = JSON.parse(localStorage.getItem(STORAGE_KEY_PAKET) || "[]");
+        return [...PAKET_BAWAAN, ...(Array.isArray(extra) ? extra : [])];
+      } catch (e) {
+        return PAKET_BAWAAN;
+      }
+    }
+
+    const STORAGE_KEY_KUNCI_HALAMAN = "ujianku_lite_kunci_halaman_v1";
+    const STORAGE_KEY_KUNCI_PAKET = "ujianku_lite_kunci_paket_v1";
+
+    function isHalamanDikunci() {
+      try {
+        return localStorage.getItem(STORAGE_KEY_KUNCI_HALAMAN) === "1";
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function ambilPaketTerkunci() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY_KUNCI_PAKET) || "[]");
+        return Array.isArray(raw) ? raw : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function isPaketDikunci(paketId) {
+      return ambilPaketTerkunci().includes(paketId);
+    }
+
+    function renderPilihanPaket() {
+      const select = document.getElementById("paketSelect");
+      const paketList = ambilSemuaPaket();
+      const prevValue = select.value;
+      select.innerHTML = "";
+      paketList.forEach((p, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        const terkunci = isPaketDikunci(p.id);
+        opt.textContent = terkunci ? `${p.judul} — terkunci` : p.judul;
+        select.appendChild(opt);
+      });
+      if (prevValue !== "") {
+        select.value = prevValue;
+      }
+      updateStatusPaketTerpilih();
+    }
+
+    function acakArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function siapkanSoalTeracak(paket) {
+      return acakArray(paket.soal).map((item, idx) => {
+        const opsiBerlabel = item.opsi.map((teks, asliIdx) => ({
+          teks,
+          isCorrect: asliIdx === item.jawaban
+        }));
+        const opsiAcak = acakArray(opsiBerlabel).map((o, i) => ({
+          label: ["A", "B", "C", "D"][i] || String(i + 1),
+          teks: o.teks,
+          isCorrect: o.isCorrect
+        }));
+        return {
+          id: idx,
+          q: item.q,
+          opsi: opsiAcak
+        };
+      });
+    }
+
+    async function mintaFullscreen() {
+      const el = document.documentElement;
+      try {
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        }
+      } catch (e) {
+        // Beberapa browser HP membatasi fullscreen jika di luar konteks tertentu
+      }
+    }
+
+    function keluarFullscreen() {
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      } catch (e) {}
+    }
+
+    function pilihSatuKelas(checkboxEl) {
+      if (!checkboxEl.checked) return;
+      document.querySelectorAll('input[name="kelasPilihan"]').forEach((cb) => {
+        if (cb !== checkboxEl) cb.checked = false;
+      });
+    }
+
+    function mulaiUjian() {
+      if (isHalamanDikunci()) {
+        alert("Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.");
+        return;
+      }
+
+      const nama = document.getElementById("studentName").value.trim();
+      const kelasTerpilih = Array.from(document.querySelectorAll('input[name="kelasPilihan"]:checked')).map((el) => el.value);
+      const paketIdx = parseInt(document.getElementById("paketSelect").value, 10);
+
+      if (!nama || kelasTerpilih.length === 0) {
+        alert("Mohon lengkapi Nama Lengkap dan pilih minimal satu Kelas terlebih dahulu.");
+        return;
+      }
+
+      const paketList = ambilSemuaPaket();
+      const paket = paketList[paketIdx] || paketList[0];
+
+      if (isPaketDikunci(paket.id)) {
+        alert("Paket soal ini sedang dikunci oleh guru. Silakan pilih paket soal yang sudah dibuka.");
+        return;
+      }
+
+      const kelas = kelasTerpilih.join(", ");
+
+      state = {
+        active: true,
+        submitted: false,
+        student: { nama, kelas },
+        paketJudul: paket.judul,
+        questions: siapkanSoalTeracak(paket),
+        answers: {},
+        currentIndex: 0,
+        remainingSeconds: (paket.durasiMenit || 45) * 60,
+        violations: 0,
+        lastViolationTime: 0,
+        timerId: null,
+        lastResultText: ""
+      };
+
+      document.body.classList.add("anti-cheat-active");
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("resultView").classList.add("hidden");
+      document.getElementById("teacherView").classList.add("hidden");
+      document.getElementById("examView").classList.remove("hidden");
+      document.getElementById("examTopbar").classList.remove("hidden");
+      document.getElementById("warningBanner").style.display = "none";
+
+      updateViolationBadge();
+      renderSoal();
+      renderNavGrid();
+      mulaiTimer();
+      kunciRiwayatBrowser();
+      mintaFullscreen();
+    }
+
+    function mulaiTimer() {
+      if (state.timerId) clearInterval(state.timerId);
+      updateTimerDisplay();
+      state.timerId = setInterval(() => {
+        if (!state.active || state.submitted) return;
+        state.remainingSeconds -= 1;
+        updateTimerDisplay();
+        if (state.remainingSeconds <= 0) {
+          selesaikanUjian("Waktu ujian telah habis.");
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const sec = Math.max(0, state.remainingSeconds);
+      const m = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      const el = document.getElementById("timerDisplay");
+      el.textContent = `${m}:${s}`;
+      if (sec <= 60) {
+        el.classList.add("low");
+      } else {
+        el.classList.remove("low");
+      }
+    }
+
+    function updateViolationBadge() {
+      document.getElementById("violationBadge").textContent =
+        `Pelanggaran: ${state.violations}/${MAX_VIOLATIONS}`;
+    }
+
+    function catatPelanggaran(alasan) {
+      if (!state.active || state.submitted) return;
+      const sekarang = Date.now();
+      // Cegah duplikasi pelanggaran dalam waktu kurang dari 1,2 detik
+      if (sekarang - state.lastViolationTime < 1200) return;
+      state.lastViolationTime = sekarang;
+
+      state.violations += 1;
+      updateViolationBadge();
+
+      const banner = document.getElementById("warningBanner");
+      banner.style.display = "block";
+      banner.textContent = `Peringatan Anti-Cheat (${state.violations}/${MAX_VIOLATIONS}): ${alasan}`;
+
+      if (state.violations >= MAX_VIOLATIONS) {
+        selesaikanUjian("Ujian otomatis dikumpulkan karena mencapai batas maksimal 3 pelanggaran anti-cheat.");
+      }
+    }
+
+    function renderSoal() {
+      const total = state.questions.length;
+      const qData = state.questions[state.currentIndex];
+      const terpilihIdx = state.answers[state.currentIndex];
+
+      document.getElementById("topbarInfo").textContent = `Soal ${state.currentIndex + 1}/${total}`;
+      document.getElementById("questionMeta").textContent = `PERTANYAAN ${state.currentIndex + 1} DARI ${total}`;
+      document.getElementById("questionText").textContent = qData.q;
+
+      const persen = Math.round(((state.currentIndex + 1) / total) * 100);
+      document.getElementById("progressBar").style.width = `${persen}%`;
+
+      const optionList = document.getElementById("optionList");
+      optionList.innerHTML = "";
+
+      qData.opsi.forEach((opt, idx) => {
+        const isChecked = terpilihIdx === idx;
+        const labelEl = document.createElement("label");
+        labelEl.className = `option-item ${isChecked ? "selected" : ""}`;
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "jawabanAktif";
+        radio.checked = isChecked;
+        radio.onchange = () => {
+          state.answers[state.currentIndex] = idx;
+          renderSoal();
+          renderNavGrid();
+        };
+
+        const span = document.createElement("span");
+        span.textContent = `${opt.label}. ${opt.teks}`;
+
+        labelEl.appendChild(radio);
+        labelEl.appendChild(span);
+        optionList.appendChild(labelEl);
+      });
+
+      document.getElementById("prevBtn").disabled = state.currentIndex === 0;
+      const nextBtn = document.getElementById("nextBtn");
+      if (state.currentIndex === total - 1) {
+        nextBtn.textContent = "Selesai & Kumpulkan";
+        nextBtn.className = "btn btn-success";
+      } else {
+        nextBtn.textContent = "Berikutnya";
+        nextBtn.className = "btn btn-primary";
+      }
+    }
+
+    function renderNavGrid() {
+      const grid = document.getElementById("questionGrid");
+      grid.innerHTML = "";
+      state.questions.forEach((_, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = idx + 1;
+        btn.className = "q-num";
+        if (state.answers[idx] !== undefined) btn.classList.add("answered");
+        if (idx === state.currentIndex) btn.classList.add("current");
+        btn.onclick = () => {
+          state.currentIndex = idx;
+          renderSoal();
+          renderNavGrid();
+        };
+        grid.appendChild(btn);
+      });
+    }
+
+    function gantiSoal(arah) {
+      const target = state.currentIndex + arah;
+      if (target >= 0 && target < state.questions.length) {
+        state.currentIndex = target;
+        renderSoal();
+        renderNavGrid();
+      } else if (arah > 0 && state.currentIndex === state.questions.length - 1) {
+        konfirmasiSelesai();
+      }
+    }
+
+    function konfirmasiSelesai() {
+      const terjawab = Object.keys(state.answers).length;
+      const total = state.questions.length;
+      const pesan = terjawab < total
+        ? `Masih ada ${total - terjawab} soal yang belum dijawab. Yakin ingin mengumpulkan ujian sekarang?`
+        : "Yakin ingin mengumpulkan semua jawaban ujian?";
+      if (confirm(pesan)) {
+        selesaikanUjian("Jawaban berhasil dikumpulkan.");
+      }
+    }
+
+    function selesaikanUjian(keterangan) {
+      if (state.submitted) return;
+      state.submitted = true;
+      state.active = false;
+
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+
+      document.body.classList.remove("anti-cheat-active");
+      keluarFullscreen();
+
+      let benar = 0;
+      state.questions.forEach((qItem, idx) => {
+        const ansIdx = state.answers[idx];
+        if (ansIdx !== undefined && qItem.opsi[ansIdx] && qItem.opsi[ansIdx].isCorrect) {
+          benar += 1;
+        }
+      });
+
+      const total = state.questions.length;
+      const nilai = total > 0 ? Math.round((benar / total) * 100) : 0;
+      const terjawab = Object.keys(state.answers).length;
+      const waktuCatat = new Date().toLocaleString("id-ID");
+
+      const entriRekap = {
+        waktu: waktuCatat,
+        nama: state.student.nama,
+        kelas: state.student.kelas,
+        paket: state.paketJudul,
+        benar,
+        total,
+        nilai,
+        pelanggaran: state.violations
+      };
+
+      simpanRekapKeStorage(entriRekap);
+
+      document.getElementById("examTopbar").classList.add("hidden");
+      document.getElementById("examView").classList.add("hidden");
+      document.getElementById("resultView").classList.remove("hidden");
+
+      document.getElementById("finishReason").textContent = keterangan;
+      document.getElementById("finalScore").textContent = nilai;
+      document.getElementById("scoreDetail").textContent =
+        `Benar ${benar} dari ${total} soal (${terjawab} terjawab)`;
+
+      document.getElementById("resultSummary").innerHTML = `
+        <strong>Nama:</strong> ${escapeHtml(state.student.nama)}<br/>
+        <strong>Kelas:</strong> ${escapeHtml(state.student.kelas)}<br/>
+        <strong>Paket:</strong> ${escapeHtml(state.paketJudul)}<br/>
+        <strong>Catatan Pelanggaran:</strong> ${state.violations} kali
+      `;
+
+      state.lastResultText = [
+        "BUKTI HASIL UJIANKU LITE",
+        `Nama: ${state.student.nama}`,
+        `Kelas: ${state.student.kelas}`,
+        `Paket: ${state.paketJudul}`,
+        `Benar: ${benar}/${total}`,
+        `Nilai: ${nilai}`,
+        `Pelanggaran: ${state.violations}/${MAX_VIOLATIONS}`,
+        `Waktu: ${waktuCatat}`
+      ].join("\n");
+    }
+
+    function simpanRekapKeStorage(item) {
+      try {
+        const list = JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
+        list.unshift(item);
+        localStorage.setItem(STORAGE_KEY_REKAP, JSON.stringify(list));
+      } catch (e) {}
+    }
+
+    function ambilRekap() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function salinBuktiHasil() {
+      if (!state.lastResultText) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(state.lastResultText)
+          .then(() => alert("Bukti hasil ujian berhasil disalin!"))
+          .catch(() => salinFallback(state.lastResultText));
+      } else {
+        salinFallback(state.lastResultText);
+      }
+    }
+
+    function salinFallback(teks) {
+      const ta = document.createElement("textarea");
+      ta.value = teks;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Bukti hasil ujian berhasil disalin!");
+    }
+
+    function kembaliKeBeranda() {
+      document.getElementById("resultView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+      document.getElementById("studentName").value = "";
+      document.querySelectorAll('input[name="kelasPilihan"]').forEach((cb) => {
+        cb.checked = false;
+      });
+      terapkanStatusKunciBeranda();
+    }
+
+    // ==================== KONTROL KUNCI HALAMAN & PAKET SOAL ====================
+
+    function toggleKunciHalaman() {
+      const sekarangTerkunci = isHalamanDikunci();
+      localStorage.setItem(STORAGE_KEY_KUNCI_HALAMAN, sekarangTerkunci ? "0" : "1");
+      renderKontrolKunciGuru();
+      terapkanStatusKunciBeranda();
+    }
+
+    function toggleKunciPaket(paketId) {
+      const list = ambilPaketTerkunci();
+      const idx = list.indexOf(paketId);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+      } else {
+        list.push(paketId);
+      }
+      localStorage.setItem(STORAGE_KEY_KUNCI_PAKET, JSON.stringify(list));
+      renderKontrolKunciGuru();
+      renderPilihanPaket();
+    }
+
+    function terapkanStatusKunciBeranda() {
+      const terkunci = isHalamanDikunci();
+      const banner = document.getElementById("portalLockBanner");
+      const fields = document.getElementById("studentFormFields");
+      if (terkunci) {
+        banner.classList.remove("hidden");
+        fields.classList.add("hidden");
+      } else {
+        banner.classList.add("hidden");
+        fields.classList.remove("hidden");
+        updateStatusPaketTerpilih();
+      }
+    }
+
+    function updateStatusPaketTerpilih() {
+      const select = document.getElementById("paketSelect");
+      const paketList = ambilSemuaPaket();
+      const paket = paketList[parseInt(select.value, 10)] || paketList[0];
+      const infoEl = document.getElementById("paketLockInfo");
+      const btnMulai = document.getElementById("mulaiUjianBtn");
+      if (!paket) return;
+
+      if (isPaketDikunci(paket.id)) {
+        infoEl.classList.remove("hidden");
+        infoEl.textContent = `${paket.judul} — terkunci (tidak dapat dikerjakan saat ini).`;
+        btnMulai.disabled = true;
+        btnMulai.style.opacity = "0.6";
+      } else {
+        infoEl.classList.add("hidden");
+        infoEl.textContent = "";
+        btnMulai.disabled = false;
+        btnMulai.style.opacity = "1";
+      }
+    }
+
+    function renderKontrolKunciGuru() {
+      const terkunci = isHalamanDikunci();
+      const statusText = document.getElementById("statusKunciHalamanText");
+      const btn = document.getElementById("toggleKunciHalamanBtn");
+      if (terkunci) {
+        statusText.textContent = "Status: TERKUNCI (Siswa belum bisa memulai ujian)";
+        btn.textContent = "Buka Kunci Halaman";
+        btn.className = "btn btn-success btn-sm";
+      } else {
+        statusText.textContent = "Status: TERBUKA (Siswa dapat mengakses form mulai)";
+        btn.textContent = "Kunci Halaman";
+        btn.className = "btn btn-danger btn-sm";
+      }
+
+      const container = document.getElementById("daftarKunciPaket");
+      const paketList = ambilSemuaPaket();
+      container.innerHTML = "";
+
+      paketList.forEach((p) => {
+        const dikunci = isPaketDikunci(p.id);
+        const row = document.createElement("div");
+        row.className = "paket-lock-row";
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHtml(p.judul)}</strong><br/>
+            <span style="font-size:0.78rem; color:${dikunci ? "var(--danger)" : "var(--success)"}; font-weight:700;">
+              ${dikunci ? "Terkunci" : "Terbuka"}
+            </span>
+          </div>
+          <button type="button" class="btn ${dikunci ? "btn-success" : "btn-outline"} btn-sm" onclick="toggleKunciPaket('${escapeHtml(p.id)}')">
+            ${dikunci ? "Buka Kunci" : "Kunci Soal"}
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // ==================== PANEL GURU ====================
+    function bukaModalGuru() {
+      document.getElementById("teacherPinInput").value = "";
+      document.getElementById("pinModal").classList.remove("hidden");
+    }
+
+    function tutupModalGuru() {
+      document.getElementById("pinModal").classList.add("hidden");
+    }
+
+    function verifikasiPinGuru() {
+      const pin = document.getElementById("teacherPinInput").value.trim();
+      if (pin !== TEACHER_PIN) {
+        alert("PIN salah! PIN default adalah 1234.");
+        return;
+      }
+      tutupModalGuru();
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("teacherView").classList.remove("hidden");
+      renderKontrolKunciGuru();
+      renderTabelRekap();
+    }
+
+    function keluarPanelGuru() {
+      document.getElementById("teacherView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+      renderPilihanPaket();
+      terapkanStatusKunciBeranda();
+    }
+
+    function renderTabelRekap() {
+      const tbody = document.getElementById("rekapTableBody");
+      const rekap = ambilRekap();
+      tbody.innerHTML = "";
+
+      if (rekap.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted);">Belum ada data nilai.</td></tr>`;
+        return;
+      }
+
+      rekap.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(r.waktu)}</td>
+          <td>${escapeHtml(r.nama)}</td>
+          <td>${escapeHtml(r.kelas)}</td>
+          <td>${escapeHtml(r.paket)}</td>
+          <td>${r.benar}/${r.total}</td>
+          <td><strong>${r.nilai}</strong></td>
+          <td>${r.pelanggaran}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function unduhCSV() {
+      const rekap = ambilRekap();
+      if (rekap.length === 0) {
+        alert("Tidak ada data rekap untuk diunduh.");
+        return;
+      }
+      const header = ["Waktu", "Nama", "Kelas", "Paket Soal", "Benar", "Total Soal", "Nilai", "Pelanggaran"];
+      const rows = rekap.map((r) => [
+        r.waktu, r.nama, r.kelas, r.paket, r.benar, r.total, r.nilai, r.pelanggaran
+      ]);
+      const csvContent = [header, ...rows]
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rekap-nilai-ujianku-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function hapusRekap() {
+      if (!confirm("Hapus seluruh data rekap nilai di perangkat ini?")) return;
+      localStorage.removeItem(STORAGE_KEY_REKAP);
+      renderTabelRekap();
+    }
+
+    function simpanPaketBaru() {
+      const raw = document.getElementById("jsonPaketInput").value.trim();
+      if (!raw) {
+        alert("Silakan tempelkan JSON paket soal terlebih dahulu.");
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed.judul || !Array.isArray(parsed.soal) || parsed.soal.length === 0) {
+          throw new Error("Struktur JSON tidak lengkap.");
+        }
+        const valid = parsed.soal.every(
+          (s) => typeof s.q === "string" && Array.isArray(s.opsi) && s.opsi.length >= 2 && typeof s.jawaban === "number"
+        );
+        if (!valid) {
+          throw new Error("Format item soal tidak valid.");
+        }
+
+        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY_PAKET) || "[]");
+        existing.push({
+          id: "paket-" + Date.now(),
+          judul: parsed.judul,
+          durasiMenit: parseInt(parsed.durasiMenit, 10) || 45,
+          soal: parsed.soal
+        });
+        localStorage.setItem(STORAGE_KEY_PAKET, JSON.stringify(existing));
+        document.getElementById("jsonPaketInput").value = "";
+        alert("Paket soal baru berhasil disimpan!");
+        renderPilihanPaket();
+      } catch (err) {
+        alert("Gagal menyimpan paket soal: " + err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ==================== EVENT LISTENER ANTI-CHEAT ====================
+    function kunciRiwayatBrowser() {
+      try {
+        history.pushState({ examLock: true }, "", location.href);
+        history.pushState({ examLock: true }, "", location.href);
+      } catch (e) {}
+    }
+
+    window.addEventListener("popstate", () => {
+      if (state.active && !state.submitted) {
+        kunciRiwayatBrowser();
+        catatPelanggaran("Menekan tombol Kembali (Back) saat ujian berlangsung.");
+        mintaFullscreen();
+      }
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+      if (state.active && !state.submitted) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    let fullscreenPromptedThisExit = false;
+
+    function paksaMasukFullscreenDariGestur() {
+      if (!state.active || state.submitted) return;
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFs) {
+        mintaFullscreen();
+      }
+    }
+
+    // Tangkap gestur paling awal di mobile (pointerdown / touchstart / click)
+    ["pointerdown", "touchstart", "click"].forEach((evt) => {
+      document.addEventListener(evt, () => {
+        if (state.active && !state.submitted) {
+          paksaMasukFullscreenDariGestur();
+        }
+      }, { passive: true });
+    });
+
+    // Jika siswa menyentuh tombol radio opsi jawaban, pastikan fullscreen ikut dipicu
+    document.addEventListener("change", (e) => {
+      if (state.active && !state.submitted && e.target && e.target.name === "jawabanAktif") {
+        paksaMasukFullscreenDariGestur();
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && state.active && !state.submitted) {
+        catatPelanggaran("Terdeteksi berpindah tab atau meminimalkan browser.");
+      }
+    });
+
+    window.addEventListener("blur", () => {
+      if (state.active && !state.submitted) {
+        catatPelanggaran("Jendela ujian kehilangan fokus (kemungkinan membuka aplikasi/menu lain).");
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFs && state.active && !state.submitted) {
+        fullscreenPromptedThisExit = true;
+        kunciRiwayatBrowser();
+        catatPelanggaran("Keluar dari mode layar penuh (Fullscreen) — ketuk layar/soal untuk masuk kembali.");
+      } else if (isFs) {
+        fullscreenPromptedThisExit = false;
+      }
+    });
+
+    document.addEventListener("contextmenu", (e) => {
+      if (state.active && !state.submitted) {
+        e.preventDefault();
+      }
+    });
+
+    ["copy", "cut", "paste"].forEach((evt) => {
+      document.addEventListener(evt, (e) => {
+        if (state.active && !state.submitted) {
+          e.preventDefault();
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (!state.active || state.submitted) return;
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ["c", "v", "x", "u", "s", "p", "a"].includes(e.key.toLowerCase())
+      ) {
+        e.preventDefault();
+      }
+    });
+
+    // Inisialisasi awal
+    renderPilihanPaket();
+    terapkanStatusKunciBeranda();
+  </script>
+</body>
+</html>
+```[cite: 13, 14]
+
+<ElicitationsGroup message="Jika masih ada yang perlu disesuaikan:">
+  <Elicitation label="Ubah PIN admin" query="Bagaimana cara mengubah PIN admin bawaan 1234 di kode index.html?"/>
+  <Elicitation label="Kirim rekap ke Sheet" query="Bagaimana cara menghubungkan hasil ujian agar otomatis masuk ke Google Spreadsheet?"/>
+</ElicitationsGroup>
