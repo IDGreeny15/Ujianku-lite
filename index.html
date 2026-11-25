@@ -381,6 +381,56 @@
       padding: 20px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--primary);
+    }
+
+    .lock-notice {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .paket-lock-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+    }
   </style>
 </head>
 <body>
@@ -389,7 +439,7 @@
     <div class="exam-topbar-inner">
       <span id="topbarInfo">Soal 1/1</span>
       <span id="violationBadge" class="badge danger">Pelanggaran: 0/3</span>
-      <span id="timerDisplay" class="timer">15:00</span>
+      <span id="timerDisplay" class="timer">45:00</span>
     </div>
   </div>
 
@@ -405,37 +455,55 @@
         <h1>Masuk Ujian</h1>
         <p>Aplikasi ringan tanpa login akun Google. Pastikan HP dalam kondisi siap sebelum memulai.</p>
 
-        <div class="form-group">
-          <label for="studentName">Nama Lengkap</label>
-          <input type="text" id="studentName" placeholder="Contoh: Andi Pratama" autocomplete="off" />
+        <div id="portalLockBanner" class="lock-notice hidden">
+          Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.
         </div>
 
-        <div class="row-2">
+        <div id="studentFormFields">
           <div class="form-group">
-            <label for="studentClass">Kelas</label>
-            <input type="text" id="studentClass" placeholder="Contoh: IV A" autocomplete="off" />
+            <label for="studentName">Nama Lengkap</label>
+            <input type="text" id="studentName" placeholder="Contoh: Andi Pratama" autocomplete="off" />
           </div>
+
           <div class="form-group">
-            <label for="studentNumber">No. Absen</label>
-            <input type="text" id="studentNumber" placeholder="Contoh: 05" autocomplete="off" />
+            <label>Pilih Kelas</label>
+            <div class="checkbox-group" id="kelasCheckboxGroup">
+              <label class="checkbox-item">
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV A" />
+                <span>Kelas IV A</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV B" />
+                <span>Kelas IV B</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV C" />
+                <span>Kelas IV C</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" name="kelasPilihan" value="Kelas IV D" />
+                <span>Kelas IV D</span>
+              </label>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="paketSelect">Pilih Paket Soal</label>
-          <select id="paketSelect"></select>
-        </div>
+          <div class="form-group">
+            <label for="paketSelect">Pilih Paket Soal</label>
+            <select id="paketSelect" onchange="updateStatusPaketTerpilih()"></select>
+            <div id="paketLockInfo" class="lock-notice hidden" style="margin-top:8px; margin-bottom:0;"></div>
+          </div>
 
-        <div class="card" style="background:#f8fafc; padding:12px; margin-bottom:16px;">
-          <strong style="font-size:0.88rem; display:block; margin-bottom:4px;">Aturan Mode Anti-Cheat:</strong>
-          <p style="margin:0; font-size:0.83rem;">
-            1. Layar akan otomatis masuk mode layar penuh saat mulai.<br/>
-            2. Berpindah tab, keluar layar penuh, atau beralih aplikasi dicatat sebagai pelanggaran.<br/>
-            3. Maksimal <strong>3 pelanggaran</strong>; setelah itu ujian otomatis dikumpulkan.
-          </p>
-        </div>
+          <div class="card" style="background:#f8fafc; padding:12px; margin-bottom:16px;">
+            <strong style="font-size:0.88rem; display:block; margin-bottom:4px;">Aturan Mode Anti-Cheat:</strong>
+            <p style="margin:0; font-size:0.83rem;">
+              1. Layar akan otomatis masuk mode layar penuh saat mulai.<br/>
+              2. Berpindah tab, keluar layar penuh, atau beralih aplikasi dicatat sebagai pelanggaran.<br/>
+              3. Maksimal <strong>3 pelanggaran</strong>; setelah itu ujian otomatis dikumpulkan.
+            </p>
+          </div>
 
-        <button class="btn btn-primary" onclick="mulaiUjian()">Mulai Ujian Sekarang</button>
+          <button id="mulaiUjianBtn" class="btn btn-primary" onclick="mulaiUjian()">Mulai Ujian Sekarang</button>
+        </div>
       </div>
     </div>
 
@@ -508,7 +576,6 @@
                 <th>Waktu</th>
                 <th>Nama</th>
                 <th>Kelas</th>
-                <th>Absen</th>
                 <th>Paket</th>
                 <th>Benar</th>
                 <th>Nilai</th>
@@ -517,6 +584,24 @@
             </thead>
             <tbody id="rekapTableBody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Kontrol Kunci Halaman &amp; Kunci Soal</h3>
+        <p>Kunci tampilan awal agar siswa belum bisa mengerjakan sebelum waktu dimulai, atau kunci paket soal tertentu agar siswa tidak salah membuka soal.</p>
+
+        <div class="paket-lock-row">
+          <div>
+            <strong>Kunci Tampilan Awal Ujian</strong><br/>
+            <span id="statusKunciHalamanText" style="font-size:0.8rem; color:var(--muted);">Status: Terbuka</span>
+          </div>
+          <button id="toggleKunciHalamanBtn" class="btn btn-danger btn-sm" onclick="toggleKunciHalaman()">Kunci Halaman</button>
+        </div>
+
+        <div style="margin-top:12px;">
+          <strong style="font-size:0.88rem; display:block; margin-bottom:6px;">Kunci / Buka Paket Soal:</strong>
+          <div id="daftarKunciPaket"></div>
         </div>
       </div>
 
@@ -554,684 +639,550 @@
 
     const PAKET_BAWAAN = [
       {
-        id: "matematika-dasar",
-        judul: "Matematika Kelas IV - Bilangan & Pecahan",
-        durasiMenit: 10,
-        soal: [
-          {
-            q: "Nilai angka 6 pada bilangan 6.482 menempati nilai tempat ...",
-            opsi: ["Ribuan", "Ratusan", "Puluhan", "Satuan"],
-            jawaban: 0
-          },
-          {
-            q: "Urutan bilangan dari yang terkecil ke terbesar pada 3.676, 2.460, dan 3.726 adalah ...",
-            opsi: [
-              "2.460, 3.676, 3.726",
-              "3.726, 3.676, 2.460",
-              "2.460, 3.726, 3.676",
-              "3.676, 2.460, 3.726"
-            ],
-            jawaban: 0
-          },
-          {
-            q: "Pecahan yang senilai dengan 1/3 adalah ...",
-            opsi: ["2/6", "2/9", "3/6", "4/9"],
-            jawaban: 0
-          },
-          {
-            q: "Bentuk desimal dari pecahan 25/100 adalah ...",
-            opsi: ["0,25", "2,5", "0,025", "25,0"],
-            jawaban: 0
-          },
-          {
-            q: "Pola bilangan 20, 28, 36, 44, ... memiliki aturan selalu ditambah ...",
-            opsi: ["8", "6", "7", "10"],
-            jawaban: 0
-          }
-        ]
+            "id": "mulok-bahasa-tolaki-kelas4",
+            "judul": "Mulok Bahasa Tolaki Kelas IV (Semester 1)",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Judul wacana legenda dalam Bahasa Tolaki 'Tula-Tula Kadadia'ano Konawe'eha ano Laasolo' artinya adalah ....",
+                        "opsi": [
+                              "Legenda Pohon Beringin di Ulu Iwoi",
+                              "Kisah Perjalanan ke Puncak Gunung",
+                              "Kisah Dua Putri di Tepi Pantai",
+                              "Kisah Terjadinya Sungai Konawe'eha dan Sungai Laasolo"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Daerah ramai yang menjadi tujuan perjalanan Putri Konawe'eha dan Putri Laasolo bernama ....",
+                        "opsi": [
+                              "Manggasa",
+                              "Laandolaki",
+                              "Amosilu",
+                              "Ulu Iwoi"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Tempat singgah Putri Konawe'eha dan Putri Laasolo untuk beristirahat dan bergantian mencari kutu disebut ....",
+                        "opsi": [
+                              "Ulu Iwoi",
+                              "Kambo",
+                              "Wiwi Ndahi",
+                              "Laandolaki"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Dalam cerita legenda tersebut, putri yang tertidur nyenyak saat dicarikan kutu adalah ....",
+                        "opsi": [
+                              "Putri Konawe'eha",
+                              "Putri Laasolo",
+                              "Putri Laandolaki",
+                              "Putri Ulu Iwoi"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Sungai yang jalannya panjang berliku-liku dan arusnya tidak deras dalam kisah legenda tersebut adalah ....",
+                        "opsi": [
+                              "Sungai Laandolaki",
+                              "Sungai Ulu Iwoi",
+                              "Sungai Konawe'eha",
+                              "Sungai Laasolo"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Arti kata 'wiwi ndahi' dalam Bahasa Tolaki adalah ....",
+                        "opsi": [
+                              "puncak gunung",
+                              "tepi pantai",
+                              "di bawah pohon",
+                              "di dalam hutan"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata permintaan dalam Bahasa Tolaki 'Powe'aku' artinya adalah ....",
+                        "opsi": [
+                              "ambilkan saya",
+                              "bawakan saya",
+                              "berikan pada saya",
+                              "belikan saya"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kata permintaan dalam Bahasa Tolaki 'Ale'ikona' memiliki arti ....",
+                        "opsi": [
+                              "ambilkan saya",
+                              "ulurkan saya",
+                              "bayarkan saya",
+                              "tunjukkan saya"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Arti dari kalimat permintaan 'Wada'ikona booboonggu' adalah ....",
+                        "opsi": [
+                              "Bayarkan buku saya",
+                              "Ambilkan buku saya",
+                              "Bawakan buku saya",
+                              "Kembalikan bangku saya"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata permintaan 'Po'olikona' dalam bahasa Indonesia berarti ....",
+                        "opsi": [
+                              "jolokkan saya",
+                              "belikan saya",
+                              "berikan pada saya",
+                              "taruhkan di atas"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata ajakan 'Leundo' dalam Bahasa Tolaki memiliki arti ....",
+                        "opsi": [
+                              "pergilah",
+                              "duluan",
+                              "cepatlah",
+                              "marilah"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Arti dari kalimat ajakan 'Tolakoto mo'iso' adalah ....",
+                        "opsi": [
+                              "Kita pergi makan",
+                              "Marilah pulang",
+                              "Kita pergi tidur",
+                              "Marilah duduk"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Dalam kalimat 'Marilah kita pergi tidur', kata Bahasa Tolaki untuk 'tidur' adalah ....",
+                        "opsi": [
+                              "mo'alo",
+                              "mongga",
+                              "mo'iso",
+                              "moburi"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kalimat ajakan 'Hiando ato ponggaa' artinya adalah ....",
+                        "opsi": [
+                              "Marilah kita sembahyang",
+                              "Ayolah kita makan",
+                              "Marilah kita minum",
+                              "Marilah kita tidur"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata perintah dalam Bahasa Tolaki 'Polika'i' artinya adalah ....",
+                        "opsi": [
+                              "pindahkan",
+                              "bayarkan",
+                              "pergilah",
+                              "ambilkan"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata perintah 'Poburito' dalam bahasa Indonesia berarti ....",
+                        "opsi": [
+                              "mengajilah",
+                              "menulislah",
+                              "menyapulah",
+                              "membacalah"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata perintah dalam Bahasa Tolaki yang berarti 'membacalah' adalah ....",
+                        "opsi": [
+                              "Posaputo",
+                              "Poburito",
+                              "Pobasato",
+                              "Ponggaato"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Arti dari kalimat perintah 'Lakoto pongga' adalah ....",
+                        "opsi": [
+                              "Pergilah mandi",
+                              "Pergilah ke pasar",
+                              "Pergilah sekolah",
+                              "Pergilah makan"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Judul lagu daerah Tolaki yang terdapat pada materi semester 1 adalah ....",
+                        "opsi": [
+                              "Mebaho-baho",
+                              "Molako-lako",
+                              "Tula-Tula Konawe",
+                              "Silo-Silo Mata"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Kata sopan dalam Bahasa Tolaki yang digunakan untuk mengucapkan 'permisi' adalah ....",
+                        "opsi": [
+                              "Ileundo",
+                              "Tarimakasi",
+                              "Tabe",
+                              "Inggomiu"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kata umum budi pekerti 'Monggaakaa' dalam Bahasa Tolaki artinya adalah ....",
+                        "opsi": [
+                              "jalan-jalan",
+                              "tidur-tiduran",
+                              "mandi-mandi",
+                              "sarapan"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Arti kata 'Meronga-ronga' dalam Bahasa Tolaki adalah ....",
+                        "opsi": [
+                              "bersama-sama",
+                              "cepat-cepat",
+                              "duduk-duduk",
+                              "berdiri"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata dalam Bahasa Tolaki yang berarti 'meminjam' adalah ....",
+                        "opsi": [
+                              "mo'uta",
+                              "menao-nao",
+                              "mebaho-baho",
+                              "menggookoro"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Ungkapan kata berita 'Leu'ito bara' artinya adalah ....",
+                        "opsi": [
+                              "akan datang",
+                              "sudah datang",
+                              "sudah pulang",
+                              "sudah selesai"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata bilangan penggolong benda 'Aso mbu'u' dalam Bahasa Tolaki berarti ....",
+                        "opsi": [
+                              "satu rumpun",
+                              "satu ikat",
+                              "satu potong",
+                              "satu pohon"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Kata berita yang menunjukkan letak 'di belakang' dalam Bahasa Tolaki adalah ....",
+                        "opsi": [
+                              "i bungguno",
+                              "i wawono",
+                              "i loluno",
+                              "i uneno"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Jumlah pembagian kata depan dalam Bahasa Tolaki adalah ....",
+                        "opsi": [
+                              "3 macam",
+                              "4 macam",
+                              "5 macam",
+                              "2 macam"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Kata depan dalam Bahasa Tolaki yang bermakna 'di dalam' dan digunakan pada kata keterangan benda adalah ....",
+                        "opsi": [
+                              "i une",
+                              "i",
+                              "ine",
+                              "ano"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Kata depan 'ine' dalam Bahasa Tolaki memiliki makna ....",
+                        "opsi": [
+                              "dari",
+                              "di belakang",
+                              "pada atau kepada",
+                              "di dalam"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Kata depan yang tepat untuk melengkapi kalimat 'Booboonggu laa ... lamari' (Buku saya ada di dalam lemari) adalah ....",
+                        "opsi": [
+                              "ari",
+                              "ine",
+                              "i",
+                              "i une"
+                        ],
+                        "jawaban": 3
+                  }
+            ]
       },
       {
-        id: "bahasa-inggris-dasar",
-        judul: "Bahasa Inggris Kelas IV - Daily Activities",
-        durasiMenit: 10,
-        soal: [
-          {
-            q: "What is Cici doing in the library? She is ... a book.",
-            opsi: ["reading", "cooking", "swimming", "sleeping"],
-            jawaban: 0
-          },
-          {
-            q: "Students ... discussing in the classroom.",
-            opsi: ["are", "is", "am", "was"],
-            jawaban: 0
-          },
-          {
-            q: "The number 75 in English words is ...",
-            opsi: ["Seventy five", "Fifty seven", "Seventy six", "Sixty five"],
-            jawaban: 0
-          },
-          {
-            q: "Where does Mother cook? She cooks in the ...",
-            opsi: ["kitchen", "bathroom", "garage", "bedroom"],
-            jawaban: 0
-          },
-          {
-            q: "We use ... and toothpaste to brush our teeth.",
-            opsi: ["toothbrush", "towel", "pillow", "spoon"],
-            jawaban: 0
-          }
-        ]
-      }
-    ];
-
-    let state = {
-      active: false,
-      submitted: false,
-      student: null,
-      paketJudul: "",
-      questions: [],
-      answers: {},
-      currentIndex: 0,
-      remainingSeconds: 0,
-      violations: 0,
-      lastViolationTime: 0,
-      timerId: null,
-      lastResultText: ""
-    };
-
-    function ambilSemuaPaket() {
-      try {
-        const extra = JSON.parse(localStorage.getItem(STORAGE_KEY_PAKET) || "[]");
-        return [...PAKET_BAWAAN, ...(Array.isArray(extra) ? extra : [])];
-      } catch (e) {
-        return PAKET_BAWAAN;
-      }
-    }
-
-    function renderPilihanPaket() {
-      const select = document.getElementById("paketSelect");
-      const paketList = ambilSemuaPaket();
-      select.innerHTML = "";
-      paketList.forEach((p, idx) => {
-        const opt = document.createElement("option");
-        opt.value = idx;
-        opt.textContent = `${p.judul} (${p.soal.length} soal • ${p.durasiMenit} mnt)`;
-        select.appendChild(opt);
-      });
-    }
-
-    function acakArray(arr) {
-      const copy = [...arr];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    }
-
-    function siapkanSoalTeracak(paket) {
-      return acakArray(paket.soal).map((item, idx) => {
-        const opsiBerlabel = item.opsi.map((teks, asliIdx) => ({
-          teks,
-          isCorrect: asliIdx === item.jawaban
-        }));
-        const opsiAcak = acakArray(opsiBerlabel).map((o, i) => ({
-          label: ["A", "B", "C", "D"][i] || String(i + 1),
-          teks: o.teks,
-          isCorrect: o.isCorrect
-        }));
-        return {
-          id: idx,
-          q: item.q,
-          opsi: opsiAcak
-        };
-      });
-    }
-
-    async function mintaFullscreen() {
-      const el = document.documentElement;
-      try {
-        if (el.requestFullscreen) {
-          await el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-          await el.webkitRequestFullscreen();
-        }
-      } catch (e) {
-        // Beberapa browser HP membatasi fullscreen jika di luar konteks tertentu
-      }
-    }
-
-    function keluarFullscreen() {
-      try {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-      } catch (e) {}
-    }
-
-    function mulaiUjian() {
-      const nama = document.getElementById("studentName").value.trim();
-      const kelas = document.getElementById("studentClass").value.trim();
-      const absen = document.getElementById("studentNumber").value.trim();
-      const paketIdx = parseInt(document.getElementById("paketSelect").value, 10);
-
-      if (!nama || !kelas || !absen) {
-        alert("Mohon lengkapi Nama Lengkap, Kelas, dan No. Absen terlebih dahulu.");
-        return;
-      }
-
-      const paketList = ambilSemuaPaket();
-      const paket = paketList[paketIdx] || paketList[0];
-
-      state = {
-        active: true,
-        submitted: false,
-        student: { nama, kelas, absen },
-        paketJudul: paket.judul,
-        questions: siapkanSoalTeracak(paket),
-        answers: {},
-        currentIndex: 0,
-        remainingSeconds: (paket.durasiMenit || 10) * 60,
-        violations: 0,
-        lastViolationTime: 0,
-        timerId: null,
-        lastResultText: ""
-      };
-
-      document.body.classList.add("anti-cheat-active");
-      document.getElementById("loginView").classList.add("hidden");
-      document.getElementById("resultView").classList.add("hidden");
-      document.getElementById("teacherView").classList.add("hidden");
-      document.getElementById("examView").classList.remove("hidden");
-      document.getElementById("examTopbar").classList.remove("hidden");
-      document.getElementById("warningBanner").style.display = "none";
-
-      updateViolationBadge();
-      renderSoal();
-      renderNavGrid();
-      mulaiTimer();
-      kunciRiwayatBrowser();
-      mintaFullscreen();
-    }
-
-    function mulaiTimer() {
-      if (state.timerId) clearInterval(state.timerId);
-      updateTimerDisplay();
-      state.timerId = setInterval(() => {
-        if (!state.active || state.submitted) return;
-        state.remainingSeconds -= 1;
-        updateTimerDisplay();
-        if (state.remainingSeconds <= 0) {
-          selesaikanUjian("Waktu ujian telah habis.");
-        }
-      }, 1000);
-    }
-
-    function updateTimerDisplay() {
-      const sec = Math.max(0, state.remainingSeconds);
-      const m = String(Math.floor(sec / 60)).padStart(2, "0");
-      const s = String(sec % 60).padStart(2, "0");
-      const el = document.getElementById("timerDisplay");
-      el.textContent = `${m}:${s}`;
-      if (sec <= 60) {
-        el.classList.add("low");
-      } else {
-        el.classList.remove("low");
-      }
-    }
-
-    function updateViolationBadge() {
-      document.getElementById("violationBadge").textContent =
-        `Pelanggaran: ${state.violations}/${MAX_VIOLATIONS}`;
-    }
-
-    function catatPelanggaran(alasan) {
-      if (!state.active || state.submitted) return;
-      const sekarang = Date.now();
-      // Cegah duplikasi pelanggaran dalam waktu kurang dari 1,2 detik
-      if (sekarang - state.lastViolationTime < 1200) return;
-      state.lastViolationTime = sekarang;
-
-      state.violations += 1;
-      updateViolationBadge();
-
-      const banner = document.getElementById("warningBanner");
-      banner.style.display = "block";
-      banner.textContent = `Peringatan Anti-Cheat (${state.violations}/${MAX_VIOLATIONS}): ${alasan}`;
-
-      if (state.violations >= MAX_VIOLATIONS) {
-        selesaikanUjian("Ujian otomatis dikumpulkan karena mencapai batas maksimal 3 pelanggaran anti-cheat.");
-      }
-    }
-
-    function renderSoal() {
-      const total = state.questions.length;
-      const qData = state.questions[state.currentIndex];
-      const terpilihIdx = state.answers[state.currentIndex];
-
-      document.getElementById("topbarInfo").textContent = `Soal ${state.currentIndex + 1}/${total}`;
-      document.getElementById("questionMeta").textContent = `PERTANYAAN ${state.currentIndex + 1} DARI ${total}`;
-      document.getElementById("questionText").textContent = qData.q;
-
-      const persen = Math.round(((state.currentIndex + 1) / total) * 100);
-      document.getElementById("progressBar").style.width = `${persen}%`;
-
-      const optionList = document.getElementById("optionList");
-      optionList.innerHTML = "";
-
-      qData.opsi.forEach((opt, idx) => {
-        const isChecked = terpilihIdx === idx;
-        const labelEl = document.createElement("label");
-        labelEl.className = `option-item ${isChecked ? "selected" : ""}`;
-
-        const radio = document.createElement("input");
-        radio.type = "radio";
-        radio.name = "jawabanAktif";
-        radio.checked = isChecked;
-        radio.onchange = () => {
-          state.answers[state.currentIndex] = idx;
-          renderSoal();
-          renderNavGrid();
-        };
-
-        const span = document.createElement("span");
-        span.textContent = `${opt.label}. ${opt.teks}`;
-
-        labelEl.appendChild(radio);
-        labelEl.appendChild(span);
-        optionList.appendChild(labelEl);
-      });
-
-      document.getElementById("prevBtn").disabled = state.currentIndex === 0;
-      const nextBtn = document.getElementById("nextBtn");
-      if (state.currentIndex === total - 1) {
-        nextBtn.textContent = "Selesai & Kumpulkan";
-        nextBtn.className = "btn btn-success";
-      } else {
-        nextBtn.textContent = "Berikutnya";
-        nextBtn.className = "btn btn-primary";
-      }
-    }
-
-    function renderNavGrid() {
-      const grid = document.getElementById("questionGrid");
-      grid.innerHTML = "";
-      state.questions.forEach((_, idx) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = idx + 1;
-        btn.className = "q-num";
-        if (state.answers[idx] !== undefined) btn.classList.add("answered");
-        if (idx === state.currentIndex) btn.classList.add("current");
-        btn.onclick = () => {
-          state.currentIndex = idx;
-          renderSoal();
-          renderNavGrid();
-        };
-        grid.appendChild(btn);
-      });
-    }
-
-    function gantiSoal(arah) {
-      const target = state.currentIndex + arah;
-      if (target >= 0 && target < state.questions.length) {
-        state.currentIndex = target;
-        renderSoal();
-        renderNavGrid();
-      } else if (arah > 0 && state.currentIndex === state.questions.length - 1) {
-        konfirmasiSelesai();
-      }
-    }
-
-    function konfirmasiSelesai() {
-      const terjawab = Object.keys(state.answers).length;
-      const total = state.questions.length;
-      const pesan = terjawab < total
-        ? `Masih ada ${total - terjawab} soal yang belum dijawab. Yakin ingin mengumpulkan ujian sekarang?`
-        : "Yakin ingin mengumpulkan semua jawaban ujian?";
-      if (confirm(pesan)) {
-        selesaikanUjian("Jawaban berhasil dikumpulkan.");
-      }
-    }
-
-    function selesaikanUjian(keterangan) {
-      if (state.submitted) return;
-      state.submitted = true;
-      state.active = false;
-
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
-      }
-
-      document.body.classList.remove("anti-cheat-active");
-      keluarFullscreen();
-
-      let benar = 0;
-      state.questions.forEach((qItem, idx) => {
-        const ansIdx = state.answers[idx];
-        if (ansIdx !== undefined && qItem.opsi[ansIdx] && qItem.opsi[ansIdx].isCorrect) {
-          benar += 1;
-        }
-      });
-
-      const total = state.questions.length;
-      const nilai = total > 0 ? Math.round((benar / total) * 100) : 0;
-      const terjawab = Object.keys(state.answers).length;
-      const waktuCatat = new Date().toLocaleString("id-ID");
-
-      const entriRekap = {
-        waktu: waktuCatat,
-        nama: state.student.nama,
-        kelas: state.student.kelas,
-        absen: state.student.absen,
-        paket: state.paketJudul,
-        benar,
-        total,
-        nilai,
-        pelanggaran: state.violations
-      };
-
-      simpanRekapKeStorage(entriRekap);
-
-      document.getElementById("examTopbar").classList.add("hidden");
-      document.getElementById("examView").classList.add("hidden");
-      document.getElementById("resultView").classList.remove("hidden");
-
-      document.getElementById("finishReason").textContent = keterangan;
-      document.getElementById("finalScore").textContent = nilai;
-      document.getElementById("scoreDetail").textContent =
-        `Benar ${benar} dari ${total} soal (${terjawab} terjawab)`;
-
-      document.getElementById("resultSummary").innerHTML = `
-        <strong>Nama:</strong> ${escapeHtml(state.student.nama)}<br/>
-        <strong>Kelas / Absen:</strong> ${escapeHtml(state.student.kelas)} / ${escapeHtml(state.student.absen)}<br/>
-        <strong>Paket:</strong> ${escapeHtml(state.paketJudul)}<br/>
-        <strong>Catatan Pelanggaran:</strong> ${state.violations} kali
-      `;
-
-      state.lastResultText = [
-        "BUKTI HASIL UJIANKU LITE",
-        `Nama: ${state.student.nama}`,
-        `Kelas: ${state.student.kelas} | Absen: ${state.student.absen}`,
-        `Paket: ${state.paketJudul}`,
-        `Benar: ${benar}/${total}`,
-        `Nilai: ${nilai}`,
-        `Pelanggaran: ${state.violations}/${MAX_VIOLATIONS}`,
-        `Waktu: ${waktuCatat}`
-      ].join("\n");
-    }
-
-    function simpanRekapKeStorage(item) {
-      try {
-        const list = JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
-        list.unshift(item);
-        localStorage.setItem(STORAGE_KEY_REKAP, JSON.stringify(list));
-      } catch (e) {}
-    }
-
-    function ambilRekap() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function salinBuktiHasil() {
-      if (!state.lastResultText) return;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(state.lastResultText)
-          .then(() => alert("Bukti hasil ujian berhasil disalin!"))
-          .catch(() => salinFallback(state.lastResultText));
-      } else {
-        salinFallback(state.lastResultText);
-      }
-    }
-
-    function salinFallback(teks) {
-      const ta = document.createElement("textarea");
-      ta.value = teks;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      alert("Bukti hasil ujian berhasil disalin!");
-    }
-
-    function kembaliKeBeranda() {
-      document.getElementById("resultView").classList.add("hidden");
-      document.getElementById("loginView").classList.remove("hidden");
-      document.getElementById("studentName").value = "";
-      document.getElementById("studentNumber").value = "";
-    }
-
-    // ==================== PANEL GURU ====================
-    function bukaModalGuru() {
-      document.getElementById("teacherPinInput").value = "";
-      document.getElementById("pinModal").classList.remove("hidden");
-    }
-
-    function tutupModalGuru() {
-      document.getElementById("pinModal").classList.add("hidden");
-    }
-
-    function verifikasiPinGuru() {
-      const pin = document.getElementById("teacherPinInput").value.trim();
-      if (pin !== TEACHER_PIN) {
-        alert("PIN salah! PIN default adalah 1234.");
-        return;
-      }
-      tutupModalGuru();
-      document.getElementById("loginView").classList.add("hidden");
-      document.getElementById("teacherView").classList.remove("hidden");
-      renderTabelRekap();
-    }
-
-    function keluarPanelGuru() {
-      document.getElementById("teacherView").classList.add("hidden");
-      document.getElementById("loginView").classList.remove("hidden");
-      renderPilihanPaket();
-    }
-
-    function renderTabelRekap() {
-      const tbody = document.getElementById("rekapTableBody");
-      const rekap = ambilRekap();
-      tbody.innerHTML = "";
-
-      if (rekap.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--muted);">Belum ada data nilai.</td></tr>`;
-        return;
-      }
-
-      rekap.forEach((r) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${escapeHtml(r.waktu)}</td>
-          <td>${escapeHtml(r.nama)}</td>
-          <td>${escapeHtml(r.kelas)}</td>
-          <td>${escapeHtml(r.absen)}</td>
-          <td>${escapeHtml(r.paket)}</td>
-          <td>${r.benar}/${r.total}</td>
-          <td><strong>${r.nilai}</strong></td>
-          <td>${r.pelanggaran}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function unduhCSV() {
-      const rekap = ambilRekap();
-      if (rekap.length === 0) {
-        alert("Tidak ada data rekap untuk diunduh.");
-        return;
-      }
-      const header = ["Waktu", "Nama", "Kelas", "No Absen", "Paket Soal", "Benar", "Total Soal", "Nilai", "Pelanggaran"];
-      const rows = rekap.map((r) => [
-        r.waktu, r.nama, r.kelas, r.absen, r.paket, r.benar, r.total, r.nilai, r.pelanggaran
-      ]);
-      const csvContent = [header, ...rows]
-        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-        .join("\n");
-
-      const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `rekap-nilai-ujianku-${Date.now()}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function hapusRekap() {
-      if (!confirm("Hapus seluruh data rekap nilai di perangkat ini?")) return;
-      localStorage.removeItem(STORAGE_KEY_REKAP);
-      renderTabelRekap();
-    }
-
-    function simpanPaketBaru() {
-      const raw = document.getElementById("jsonPaketInput").value.trim();
-      if (!raw) {
-        alert("Silakan tempelkan JSON paket soal terlebih dahulu.");
-        return;
-      }
-      try {
-        const parsed = JSON.parse(raw);
-        if (!parsed.judul || !Array.isArray(parsed.soal) || parsed.soal.length === 0) {
-          throw new Error("Struktur JSON tidak lengkap.");
-        }
-        const valid = parsed.soal.every(
-          (s) => typeof s.q === "string" && Array.isArray(s.opsi) && s.opsi.length >= 2 && typeof s.jawaban === "number"
-        );
-        if (!valid) {
-          throw new Error("Format item soal tidak valid.");
-        }
-
-        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY_PAKET) || "[]");
-        existing.push({
-          id: "paket-" + Date.now(),
-          judul: parsed.judul,
-          durasiMenit: parseInt(parsed.durasiMenit, 10) || 10,
-          soal: parsed.soal
-        });
-        localStorage.setItem(STORAGE_KEY_PAKET, JSON.stringify(existing));
-        document.getElementById("jsonPaketInput").value = "";
-        alert("Paket soal baru berhasil disimpan!");
-        renderPilihanPaket();
-      } catch (err) {
-        alert("Gagal menyimpan paket soal: " + err.message);
-      }
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    // ==================== EVENT LISTENER ANTI-CHEAT ====================
-    function kunciRiwayatBrowser() {
-      try {
-        history.pushState({ examLock: true }, "", location.href);
-        history.pushState({ examLock: true }, "", location.href);
-      } catch (e) {}
-    }
-
-    window.addEventListener("popstate", () => {
-      if (state.active && !state.submitted) {
-        kunciRiwayatBrowser();
-        catatPelanggaran("Menekan tombol Kembali (Back) saat ujian berlangsung.");
-        mintaFullscreen();
-      }
-    });
-
-    window.addEventListener("beforeunload", (e) => {
-      if (state.active && !state.submitted) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    });
-
-    let fullscreenPromptedThisExit = false;
-
-    function paksaMasukFullscreenDariGestur() {
-      if (!state.active || state.submitted) return;
-      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-      if (!isFs) {
-        mintaFullscreen();
-      }
-    }
-
-    // Tangkap gestur paling awal di mobile (pointerdown / touchstart / click)
-    ["pointerdown", "touchstart", "click"].forEach((evt) => {
-      document.addEventListener(evt, () => {
-        if (state.active && !state.submitted) {
-          paksaMasukFullscreenDariGestur();
-        }
-      }, { passive: true });
-    });
-
-    // Jika siswa menyentuh tombol radio opsi jawaban, pastikan fullscreen ikut dipicu
-    document.addEventListener("change", (e) => {
-      if (state.active && !state.submitted && e.target && e.target.name === "jawabanAktif") {
-        paksaMasukFullscreenDariGestur();
-      }
-    });
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden && state.active && !state.submitted) {
-        catatPelanggaran("Terdeteksi berpindah tab atau meminimalkan browser.");
-      }
-    });
-
-    window.addEventListener("blur", () => {
-      if (state.active && !state.submitted) {
-        catatPelanggaran("Jendela ujian kehilangan fokus (kemungkinan membuka aplikasi/menu lain).");
-      }
-    });
-
-    document.addEventListener("fullscreenchange", () => {
-      const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-      if (!isFs && state.active && !state.submitted) {
-        fullscreenPromptedThisExit = true;
-        kunciRiwayatBrowser();
-        catatPelanggaran("Keluar dari mode layar penuh (Fullscreen) — ketuk layar/soal untuk masuk kembali.");
-      } else if (isFs) {
-        fullscreenPromptedThisExit = false;
-      }
-    });
-
-    document.addEventListener("contextmenu", (e) => {
-      if (state.active && !state.submitted) {
-        e.preventDefault();
-      }
-    });
-
-    ["copy", "cut", "paste"].forEach((evt) => {
-      document.addEventListener(evt, (e) => {
-        if (state.active && !state.submitted) {
-          e.preventDefault();
-        }
-      });
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (!state.active || state.submitted) return;
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        ["c", "v", "x", "u", "s", "p", "a"].includes(e.key.toLowerCase())
-      ) {
-        e.preventDefault();
-      }
-    });
-
-    // Inisialisasi awal
-    renderPilihanPaket();
-  </script>
-</body>
-</html>
-```[cite: 4]
+            "id": "sbdp-kelas4-bab1-2",
+            "judul": "Seni Budaya Kelas IV - Bab 1 & 2",
+            "durasiMenit": 45,
+            "soal": [
+                  {
+                        "q": "Bangunan yang berfungsi sebagai tempat tinggal untuk jangka waktu yang lama adalah ....",
+                        "opsi": [
+                              "kantor",
+                              "hotel",
+                              "sekolah",
+                              "rumah"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Bahan yang biasa digunakan untuk membuat dinding rumah agar kokoh adalah ....",
+                        "opsi": [
+                              "plastik",
+                              "kertas",
+                              "batu bata",
+                              "kain"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Bentuk sebagian besar atap rumah adalah ....",
+                        "opsi": [
+                              "trapesium",
+                              "lingkaran",
+                              "segitiga",
+                              "jajargenjang"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Jenis gambar yang memiliki ukuran panjang dan lebar serta hanya dapat diamati dari satu arah disebut gambar ....",
+                        "opsi": [
+                              "dua dimensi",
+                              "tiga dimensi",
+                              "empat dimensi",
+                              "satu dimensi"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Gambar bentuk rumah yang tampak memiliki sisi panjang, lebar, dan tinggi sehingga berkesan memiliki ruang termasuk jenis gambar ....",
+                        "opsi": [
+                              "datar",
+                              "tiga dimensi",
+                              "dua dimensi",
+                              "satu dimensi"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Sifat permukaan suatu benda yang dapat dirasakan oleh indra penglihatan dan indra peraba disebut ....",
+                        "opsi": [
+                              "tekstur",
+                              "kontur",
+                              "brosur",
+                              "struktur"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Tekstur suatu benda dapat kita ketahui dengan cara ....",
+                        "opsi": [
+                              "didengar dan dicium",
+                              "dilihat dan diraba",
+                              "dilihat dan didengar",
+                              "diraba dan dirasa"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Benda yang dari kejauhan terlihat kasar, tetapi setelah diraba permukaannya terasa halus memiliki jenis tekstur ....",
+                        "opsi": [
+                              "semu",
+                              "abstrak",
+                              "kasar",
+                              "nyata"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Tekstur benda yang apabila dilihat dan diraba memiliki kesan permukaan yang sama disebut tekstur ....",
+                        "opsi": [
+                              "semu",
+                              "maya",
+                              "khayal",
+                              "nyata"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Kelompok benda berikut yang semuanya memiliki permukaan bertekstur kasar adalah ....",
+                        "opsi": [
+                              "ubin, plastisin, dan cermin",
+                              "kulit pohon, batu kerikil, dan bata merah",
+                              "kain sutra, plastik, dan kaca",
+                              "kaca, keramik, dan kertas"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Contoh benda di lingkungan sekitar yang memiliki permukaan bertekstur licin dan halus adalah ....",
+                        "opsi": [
+                              "kulit pohon dan bata merah",
+                              "batu kerikil dan serbuk kayu",
+                              "kaca dan keramik",
+                              "ampas kelapa dan pasir"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Teknik membuat tekstur dengan cara meletakkan kertas di atas permukaan benda bertekstur lalu mengarsirnya dengan pensil disebut teknik ....",
+                        "opsi": [
+                              "swirling",
+                              "tempel",
+                              "grattage",
+                              "frottage"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Teknik membuat karya bertekstur dengan cara menempelkan bahan-bahan seperti biji-bijian atau serbuk kayu pada bidang gambar disebut teknik ....",
+                        "opsi": [
+                              "grattage",
+                              "frottage",
+                              "tempel",
+                              "swirling"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Teknik membuat tekstur dengan cara menggoreskan benda runcing pada cat yang masih basah disebut teknik ....",
+                        "opsi": [
+                              "cetak",
+                              "frottage",
+                              "tempel",
+                              "grattage"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Bagian rumah yang berfungsi sebagai jalan keluar masuk udara dan cahaya matahari adalah ....",
+                        "opsi": [
+                              "atap",
+                              "fondasi",
+                              "pagar",
+                              "jendela"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Alat musik yang tidak bernada dan berfungsi untuk membentuk irama serta mengatur tempo lagu disebut alat musik ....",
+                        "opsi": [
+                              "melodis",
+                              "ritmis",
+                              "tiup",
+                              "harmonis"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Alat musik yang memiliki nada dan melodi serta berfungsi sebagai pengiring lagu, tari, dan instrumen tunggal disebut alat musik ....",
+                        "opsi": [
+                              "melodis",
+                              "ritmis",
+                              "perkusi",
+                              "pukul tak bernada"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Benda yang bergetar dan dapat menghasilkan suara disebut sumber ....",
+                        "opsi": [
+                              "bunyi",
+                              "energi",
+                              "cahaya",
+                              "nada"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Bunyi yang terdengar lebih keras dan jelas disebut bunyi ....",
+                        "opsi": [
+                              "halus",
+                              "lemah",
+                              "kuat",
+                              "pelan"
+                        ],
+                        "jawaban": 2
+                  },
+                  {
+                        "q": "Berikut ini yang merupakan contoh bunyi kuat adalah ....",
+                        "opsi": [
+                              "petikan jari",
+                              "klakson mobil",
+                              "angin sepoi-sepoi",
+                              "jangkrik mengerik"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Suara jangkrik yang mengerik dan nyamuk yang mendengung termasuk jenis bunyi ....",
+                        "opsi": [
+                              "buatan",
+                              "mekanik",
+                              "elektronik",
+                              "alami"
+                        ],
+                        "jawaban": 3
+                  },
+                  {
+                        "q": "Tinggi rendahnya bunyi yang beraturan dalam seni musik disebut ....",
+                        "opsi": [
+                              "tempo",
+                              "pitch",
+                              "irama",
+                              "harmoni"
+                        ],
+                        "jawaban": 1
+                  },
+                  {
+                        "q": "Nada yang terdengar rendah memiliki frekuensi getaran yang ....",
+                        "opsi": [
+                              "rendah atau kecil",
+                              "kuat dan keras",
+                              "sangat tinggi",
+                              "cepat sekali"
+                        ],
+                        "jawaban": 0
+                  },
+                  {
+                        "q": "Jumlah nada dalam satu tangga nada diatonis adalah ....",
+                        "opsi": [
+                              "8 nada",
+                              "7 nada",
+                              "5 nada",
