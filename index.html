@@ -431,6 +431,12 @@
       margin-bottom: 8px;
       font-size: 0.88rem;
     }
+    .version-footer {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -453,7 +459,7 @@
 
       <div class="card">
         <h1>Asesmen Akhir Semester</h1>
-        <p>Aplikasi ini dikembangka oleh Aljody Pahlevi Naslim, S.Pd., Harap dipahami masih terdapat banyak 'bug', mohon batrei HP dalam keadaan full dan memiliki kuota.</p>
+        <p>Aplikasi ini dikembangkan oleh Aljody Pahlevi Naslim, S.Pd., mohon dimaklumi masih terdapat banyak 'bug'.</p>
 
         <div id="portalLockBanner" class="lock-notice hidden">
           Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.
@@ -462,7 +468,7 @@
         <div id="studentFormFields">
           <div class="form-group">
             <label for="studentName">Nama Lengkap</label>
-            <input type="text" id="studentName" placeholder="Contoh: Andi Pratama" autocomplete="off" />
+            <select id="studentName"></select>
           </div>
 
           <div class="form-group">
@@ -502,9 +508,15 @@
             </p>
           </div>
 
+          <div class="form-group">
+            <label for="kritikSaranInput">Kritik dan Saran</label>
+            <textarea id="kritikSaranInput" rows="2" placeholder="Tulis kritik atau saran Anda (opsional)..."></textarea>
+          </div>
+
           <button id="mulaiUjianBtn" class="btn btn-primary" onclick="mulaiUjian()">Mulai Ujian Sekarang</button>
         </div>
       </div>
+      <div class="version-footer">version 0.1.</div>
     </div>
 
     <!-- ==================== HALAMAN PENGERJAAN SOAL ==================== -->
@@ -549,6 +561,11 @@
 
         <div id="resultSummary" style="font-size:0.9rem; margin-bottom:16px;"></div>
 
+        <div class="form-group" style="margin-top:12px;">
+          <label for="resultKritikInput">Kritik dan Saran</label>
+          <textarea id="resultKritikInput" rows="2" placeholder="Tuliskan kritik dan saran setelah mengerjakan soal..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="margin-bottom:10px;" onclick="kirimKritikSaranHasil()">Kirim Kritik &amp; Saran</button>
         <button class="btn btn-success" style="margin-bottom:10px;" onclick="salinBuktiHasil()">Salin Bukti Hasil</button>
         <button class="btn btn-outline" onclick="kembaliKeBeranda()">Kembali ke Beranda</button>
       </div>
@@ -557,7 +574,7 @@
     <!-- ==================== HALAMAN PANEL GURU ==================== -->
     <div id="teacherView" class="hidden">
       <div class="header">
-        <div class="brand">Admin</div>
+        <div class="brand">Panel Guru</div>
         <button class="btn btn-outline btn-sm" onclick="keluarPanelGuru()">Tutup Panel</button>
       </div>
 
@@ -606,6 +623,24 @@
       </div>
 
       <div class="card">
+        <h3>Kritik dan Saran Masuk</h3>
+        <div class="row-2" style="margin-bottom:10px;">
+          <button class="btn btn-outline btn-sm" onclick="renderDaftarKritik()">Segarkan</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusSemuaKritik()">Hapus Semua Masukan</button>
+        </div>
+        <div id="daftarKritikContainer" style="font-size:0.86rem;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Kelola Daftar Nama Siswa</h3>
+        <p>Masukkan satu nama siswa per baris untuk memperbarui pilihan dropdown nama siswa di perangkat ini.</p>
+        <div class="form-group">
+          <textarea id="daftarNamaInput" rows="5" placeholder="Contoh:&#10;Andi Pratama&#10;Budi Santoso&#10;Citra Dewi"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="simpanDaftarNama()">Simpan Daftar Nama</button>
+      </div>
+
+      <div class="card">
         <h3>Tambah Paket Soal Baru (Format JSON)</h3>
         <p>Tempelkan JSON dengan format: <code>{"judul":"...","durasiMenit":10,"soal":[{"q":"...","opsi":["A","B","C","D"],"jawaban":0}]}</code> (indeks <code>jawaban</code> mulai dari 0).</p>
         <div class="form-group">
@@ -620,7 +655,7 @@
   <div id="pinModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <h3>Akses Admin</h3>
-      <p>Masukkan PIN guru (default: <strong>1234</strong>).</p>
+      
       <div class="form-group">
         <input type="password" id="teacherPinInput" placeholder="Masukkan PIN" inputmode="numeric" />
       </div>
@@ -634,7 +669,7 @@
   <script>
     const STORAGE_KEY_REKAP = "ujianku_lite_rekap_v1";
     const STORAGE_KEY_PAKET = "ujianku_lite_paket_v1";
-    const TEACHER_PIN = "1234";
+    const TEACHER_PIN = "3737";
     const MAX_VIOLATIONS = 3;
 
     const PAKET_BAWAAN = [
@@ -2607,6 +2642,139 @@
       });
     }
 
+    const STORAGE_KEY_NAMA = "ujianku_lite_nama_siswa_v1";
+    const STORAGE_KEY_KRITIK = "ujianku_lite_kritik_saran_v1";
+
+    const DAFTAR_NAMA_BAWAAN = [
+      "Alham. S",
+      "Ayla Putri Banis",
+      "Aransha Lana Rafasya",
+      "Atiqah Malaeka",
+      "Aullia Linda Lestari",
+      "Aurelia Revita Zafarani",
+      "Cantika Gavaputri Al Said",
+      "Ince Muhammad Fathur",
+      "Jihan Ratu Chantika Ilham",
+      "Khaizuran Almalik Ramadhan",
+      "Muh. Azka Raffasya S",
+      "Muhammad Fahri Saputra",
+      "Muhammad Nurmantyo",
+      "Muhammad Rafa Azka Putra",
+      "Rafania Athirah",
+      "Sakina Ramadani",
+      "Tito Alfaizan Suharta",
+      "Varisha Azzahra Putri",
+      "Wa Ode Kanaya Mayzatun. S",
+      "Yara Sachi Khayana",
+      "Yoditya Kenzie Firdaus",
+      "Zazkia Khumairah"
+    ];
+
+    function ambilDaftarNama() {
+      try {
+        const custom = JSON.parse(localStorage.getItem(STORAGE_KEY_NAMA) || "null");
+        if (Array.isArray(custom) && custom.length > 0) return custom;
+      } catch (e) {}
+      return DAFTAR_NAMA_BAWAAN;
+    }
+
+    function sudahPernahMengerjakan(nama) {
+      const target = String(nama || "").trim().toLowerCase();
+      if (!target) return false;
+      const rekap = ambilRekap();
+      return rekap.some((r) => String(r.nama || "").trim().toLowerCase() === target);
+    }
+
+    function renderPilihanNama() {
+      const select = document.getElementById("studentName");
+      if (!select) return;
+      const daftar = ambilDaftarNama();
+      select.innerHTML = '<option value="">-- Pilih Nama Siswa --</option>';
+      daftar.forEach((nama) => {
+        const sudah = sudahPernahMengerjakan(nama);
+        const opt = document.createElement("option");
+        opt.value = nama;
+        opt.disabled = sudah;
+        opt.textContent = sudah ? `${nama} (Sudah mengerjakan)` : nama;
+        select.appendChild(opt);
+      });
+    }
+
+    function simpanDaftarNama() {
+      const raw = document.getElementById("daftarNamaInput").value || "";
+      const list = raw
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      if (list.length === 0) {
+        alert("Masukkan minimal satu nama siswa.");
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_NAMA, JSON.stringify(list));
+      alert("Daftar nama siswa berhasil disimpan!");
+      renderPilihanNama();
+    }
+
+    function simpanKritikSaran(teks, sumber = "Beranda") {
+      const isi = String(teks || "").trim();
+      if (!isi) return false;
+      const nama = (state.student && state.student.nama) || (document.getElementById("studentName") && document.getElementById("studentName").value) || "Anonim";
+      const kelas = (state.student && state.student.kelas) || "-";
+      try {
+        const list = JSON.parse(localStorage.getItem(STORAGE_KEY_KRITIK) || "[]");
+        list.unshift({
+          waktu: new Date().toLocaleString("id-ID"),
+          nama,
+          kelas,
+          sumber,
+          pesan: isi
+        });
+        localStorage.setItem(STORAGE_KEY_KRITIK, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function kirimKritikSaranHasil() {
+      const el = document.getElementById("resultKritikInput");
+      if (!el || !el.value.trim()) {
+        alert("Silakan tulis kritik atau saran terlebih dahulu.");
+        return;
+      }
+      if (simpanKritikSaran(el.value, "Halaman Hasil")) {
+        el.value = "";
+        alert("Kritik dan saran berhasil dikirim!");
+      }
+    }
+
+    function renderDaftarKritik() {
+      const container = document.getElementById("daftarKritikContainer");
+      if (!container) return;
+      let list = [];
+      try {
+        list = JSON.parse(localStorage.getItem(STORAGE_KEY_KRITIK) || "[]");
+      } catch (e) {}
+      if (!Array.isArray(list) || list.length === 0) {
+        container.innerHTML = '<p style="margin:0;">Belum ada kritik dan saran.</p>';
+        return;
+      }
+      container.innerHTML = list.map((item) => `
+        <div class="paket-lock-row" style="display:block;">
+          <div style="font-size:0.78rem; color:var(--muted); margin-bottom:4px;">
+            <strong>${escapeHtml(item.nama)}</strong> (${escapeHtml(item.kelas)}) • ${escapeHtml(item.waktu)} [${escapeHtml(item.sumber)}]
+          </div>
+          <div style="color:var(--text);">${escapeHtml(item.pesan)}</div>
+        </div>
+      `).join("");
+    }
+
+    function hapusSemuaKritik() {
+      if (!confirm("Hapus seluruh kritik dan saran yang masuk?")) return;
+      localStorage.removeItem(STORAGE_KEY_KRITIK);
+      renderDaftarKritik();
+    }
+
     function mulaiUjian() {
       if (isHalamanDikunci()) {
         alert("Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.");
@@ -2620,6 +2788,17 @@
       if (!nama || kelasTerpilih.length === 0) {
         alert("Mohon lengkapi Nama Lengkap dan pilih minimal satu Kelas terlebih dahulu.");
         return;
+      }
+
+      if (sudahPernahMengerjakan(nama)) {
+        alert("Nama siswa ini sudah pernah mengerjakan soal. Satu nama hanya boleh mengerjakan satu kali.");
+        return;
+      }
+
+      const kritikAwal = document.getElementById("kritikSaranInput");
+      if (kritikAwal && kritikAwal.value.trim()) {
+        simpanKritikSaran(kritikAwal.value, "Beranda");
+        kritikAwal.value = "";
       }
 
       const paketList = ambilSemuaPaket();
@@ -2792,13 +2971,21 @@
       }
     }
 
+    let sedangMengumpulkan = false;
+
     function konfirmasiSelesai() {
+      if (!state.active || state.submitted) return;
+      sedangMengumpulkan = true;
       const terjawab = Object.keys(state.answers).length;
       const total = state.questions.length;
       const pesan = terjawab < total
         ? `Masih ada ${total - terjawab} soal yang belum dijawab. Yakin ingin mengumpulkan ujian sekarang?`
         : "Yakin ingin mengumpulkan semua jawaban ujian?";
-      if (confirm(pesan)) {
+      const yakin = confirm(pesan);
+      setTimeout(() => {
+        sedangMengumpulkan = false;
+      }, 600);
+      if (yakin) {
         selesaikanUjian("Jawaban berhasil dikumpulkan.");
       }
     }
@@ -2910,7 +3097,7 @@
     function kembaliKeBeranda() {
       document.getElementById("resultView").classList.add("hidden");
       document.getElementById("loginView").classList.remove("hidden");
-      document.getElementById("studentName").value = "";
+      renderPilihanNama();
       document.querySelectorAll('input[name="kelasPilihan"]').forEach((cb) => {
         cb.checked = false;
       });
@@ -2918,7 +3105,6 @@
     }
 
     // ==================== KONTROL KUNCI HALAMAN & PAKET SOAL ====================
-
     function toggleKunciHalaman() {
       const sekarangTerkunci = isHalamanDikunci();
       localStorage.setItem(STORAGE_KEY_KUNCI_HALAMAN, sekarangTerkunci ? "0" : "1");
@@ -3024,13 +3210,14 @@
     function verifikasiPinGuru() {
       const pin = document.getElementById("teacherPinInput").value.trim();
       if (pin !== TEACHER_PIN) {
-        alert("PIN salah! PIN default adalah 1234.");
+        alert("PIN salah!");
         return;
       }
       tutupModalGuru();
       document.getElementById("loginView").classList.add("hidden");
       document.getElementById("teacherView").classList.remove("hidden");
       renderKontrolKunciGuru();
+      renderDaftarKritik();
       renderTabelRekap();
     }
 
@@ -3187,20 +3374,20 @@
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden && state.active && !state.submitted) {
+      if (document.hidden && state.active && !state.submitted && !sedangMengumpulkan) {
         catatPelanggaran("Terdeteksi berpindah tab atau meminimalkan browser.");
       }
     });
 
     window.addEventListener("blur", () => {
-      if (state.active && !state.submitted) {
+      if (state.active && !state.submitted && !sedangMengumpulkan) {
         catatPelanggaran("Jendela ujian kehilangan fokus (kemungkinan membuka aplikasi/menu lain).");
       }
     });
 
     document.addEventListener("fullscreenchange", () => {
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-      if (!isFs && state.active && !state.submitted) {
+      if (!isFs && state.active && !state.submitted && !sedangMengumpulkan) {
         fullscreenPromptedThisExit = true;
         kunciRiwayatBrowser();
         catatPelanggaran("Keluar dari mode layar penuh (Fullscreen) — ketuk layar/soal untuk masuk kembali.");
@@ -3234,14 +3421,9 @@
     });
 
     // Inisialisasi awal
+    renderPilihanNama();
     renderPilihanPaket();
     terapkanStatusKunciBeranda();
   </script>
 </body>
 </html>
-```[cite: 13, 14]
-
-<ElicitationsGroup message="Jika masih ada yang perlu disesuaikan:">
-  <Elicitation label="Ubah PIN admin" query="Bagaimana cara mengubah PIN admin bawaan 1234 di kode index.html?"/>
-  <Elicitation label="Kirim rekap ke Sheet" query="Bagaimana cara menghubungkan hasil ujian agar otomatis masuk ke Google Spreadsheet?"/>
-</ElicitationsGroup>
