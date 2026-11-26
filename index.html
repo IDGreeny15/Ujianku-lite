@@ -2919,9 +2919,7 @@
       const kelas = document.getElementById("adminKelasNamaSelect").value;
       const raw = document.getElementById("daftarNamaInput").value || "";
       const list = raw
-        .split(/
-?
-/)
+        .split(/\r?\n/)
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
       if (list.length === 0) {
