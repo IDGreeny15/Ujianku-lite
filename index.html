@@ -484,19 +484,19 @@
             <label>Pilih Kelas</label>
             <div class="checkbox-group" id="kelasCheckboxGroup">
               <label class="checkbox-item" for="kelasIVA">
-                <input id="kelasIVA" type="radio" name="kelasPilihan" value="Kelas IV A" aria-label="Kelas IV A" onchange="renderPilihanNama()" />
+                <input id="kelasIVA" type="radio" name="kelasPilihan" value="Kelas IV A" aria-label="Kelas IV A" onchange="pilihKelasBerubah()" />
                 <span>Kelas IV A</span>
               </label>
               <label class="checkbox-item" for="kelasIVB">
-                <input id="kelasIVB" type="radio" name="kelasPilihan" value="Kelas IV B" aria-label="Kelas IV B" onchange="renderPilihanNama()" />
+                <input id="kelasIVB" type="radio" name="kelasPilihan" value="Kelas IV B" aria-label="Kelas IV B" onchange="pilihKelasBerubah()" />
                 <span>Kelas IV B</span>
               </label>
               <label class="checkbox-item" for="kelasIVC">
-                <input id="kelasIVC" type="radio" name="kelasPilihan" value="Kelas IV C" aria-label="Kelas IV C" onchange="renderPilihanNama()" />
+                <input id="kelasIVC" type="radio" name="kelasPilihan" value="Kelas IV C" aria-label="Kelas IV C" onchange="pilihKelasBerubah()" />
                 <span>Kelas IV C</span>
               </label>
               <label class="checkbox-item" for="kelasIVD">
-                <input id="kelasIVD" type="radio" name="kelasPilihan" value="Kelas IV D" aria-label="Kelas IV D" onchange="renderPilihanNama()" />
+                <input id="kelasIVD" type="radio" name="kelasPilihan" value="Kelas IV D" aria-label="Kelas IV D" onchange="pilihKelasBerubah()" />
                 <span>Kelas IV D</span>
               </label>
             </div>
@@ -509,7 +509,7 @@
 
           <div class="form-group">
             <label for="paketSelect">Pilih Paket Soal</label>
-            <select id="paketSelect" onchange="updateStatusPaketTerpilih()"></select>
+            <select id="paketSelect" onchange="paketBerubah()"></select>
             <div id="paketLockInfo" class="lock-notice hidden" style="margin-top:8px; margin-bottom:0;"></div>
           </div>
 
@@ -809,6 +809,7 @@
 
     const STORAGE_KEY_NAMA = "ujianku_lite_nama_siswa_v2";
     const STORAGE_KEY_KRITIK = "ujianku_lite_kritik_saran_v1";
+    const STORAGE_KEY_ROSTER_CACHE = "ujianku_lite_roster_cache_v1";
 
     // Daftar siswa tidak lagi ditanam di source HTML publik.
     // Guru mengelola daftar melalui panel admin; data lokal lama tetap dipertahankan.
@@ -821,8 +822,12 @@
     function ambilDaftarNama(kelas) {
       if (!kelas) return [];
       try {
+        // Prioritas: daftar dari server (cache terakhir) -> data lokal lama di perangkat ini.
+        const rosterCache = bacaRosterCache();
         const customMap = JSON.parse(localStorage.getItem(STORAGE_KEY_NAMA) || "{}");
-        const daftar = customMap && Array.isArray(customMap[kelas]) ? customMap[kelas] : [];
+        const daftar = Array.isArray(rosterCache[kelas])
+          ? rosterCache[kelas]
+          : (customMap && Array.isArray(customMap[kelas]) ? customMap[kelas] : []);
         return [...new Set(daftar.map((nama) => String(nama || "").trim()).filter(Boolean))];
       } catch (e) {
         return [];
@@ -857,6 +862,107 @@
       });
     }
 
+    // ==================== DAFTAR NAMA DARI SERVER ====================
+    const statusMuatRoster = {};
+
+    function bacaRosterCache() {
+      try {
+        const obj = JSON.parse(localStorage.getItem(STORAGE_KEY_ROSTER_CACHE) || "{}");
+        return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function tulisRosterCache(kelas, names) {
+      try {
+        const cache = bacaRosterCache();
+        if (Array.isArray(names) && names.length > 0) {
+          cache[kelas] = names;
+        } else {
+          delete cache[kelas];
+        }
+        localStorage.setItem(STORAGE_KEY_ROSTER_CACHE, JSON.stringify(cache));
+      } catch (e) {}
+    }
+
+    // Mengambil daftar nama satu kelas dari server. Mengembalikan true jika server menjawab.
+    async function muatDaftarNamaDariPusat(kelas) {
+      if (!kelas || !ambilEndpointPusat()) return false;
+      statusMuatRoster[kelas] = "loading";
+      try {
+        const data = await panggilPusatJsonp({ action: "getRoster", kelas }, 10000);
+        if (!data || data.ok !== true || !Array.isArray(data.names)) throw new Error("Respons tidak valid.");
+        const names = [...new Set(data.names.map((n) => String(n || "").trim()).filter(Boolean))];
+        tulisRosterCache(kelas, names);
+        statusMuatRoster[kelas] = "ok";
+        return true;
+      } catch (e) {
+        statusMuatRoster[kelas] = "error";
+        return false;
+      }
+    }
+
+    // ==================== PENGECEKAN "SUDAH MENGERJAKAN" DI SERVER ====================
+    const namaSelesaiServer = {};
+    let sedangMemeriksaMulai = false;
+
+    function kunciSelesai(kelas, judul) {
+      return `${String(kelas || "").trim()}||${String(judul || "").trim()}`.toLowerCase();
+    }
+
+    function sudahSelesaiDiServer(nama, kelas, judul) {
+      const list = namaSelesaiServer[kunciSelesai(kelas, judul)];
+      return Array.isArray(list) && list.includes(String(nama || "").trim().toLowerCase());
+    }
+
+    // Mengambil nama yang sudah selesai untuk kelas + paket yang sedang dipilih.
+    async function segarkanNamaSelesaiDariPusat() {
+      const kelas = ambilKelasAktif();
+      const paket = ambilPaketTerpilihObj();
+      if (!kelas || !paket || !ambilEndpointPusat()) return;
+      try {
+        const data = await panggilPusatJsonp({ action: "getDoneNames", kelas, paket: paket.judul }, 10000);
+        if (!data || data.ok !== true || !Array.isArray(data.names)) return;
+        namaSelesaiServer[kunciSelesai(kelas, paket.judul)] =
+          data.names.map((n) => String(n || "").trim().toLowerCase()).filter(Boolean);
+        const paketSkrg = ambilPaketTerpilihObj();
+        if (ambilKelasAktif() === kelas && paketSkrg && paketSkrg.judul === paket.judul) renderPilihanNama();
+      } catch (e) {
+        // Abaikan; pengecekan final tetap dilakukan saat tombol Mulai ditekan.
+      }
+    }
+
+    // true = sudah pernah mengerjakan, false = belum, null = server tidak dapat dihubungi.
+    async function cekPercobaanDiServer(nama, kelas, judul) {
+      if (!ambilEndpointPusat()) return null;
+      try {
+        const data = await panggilPusatJsonp({ action: "checkAttempt", nama, kelas, paket: judul }, 10000);
+        if (!data || data.ok !== true || typeof data.sudah !== "boolean") return null;
+        return data.sudah;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function paketBerubah() {
+      updateStatusPaketTerpilih();
+      await segarkanNamaSelesaiDariPusat();
+    }
+
+    async function pilihKelasBerubah() {
+      const kelas = ambilKelasAktif();
+      if (!kelas) {
+        renderPilihanNama();
+        return;
+      }
+      // Tampilkan dulu cache/data lokal, lalu segarkan dari server.
+      if (ambilDaftarNama(kelas).length === 0) statusMuatRoster[kelas] = "loading";
+      renderPilihanNama();
+      await Promise.all([muatDaftarNamaDariPusat(kelas), segarkanNamaSelesaiDariPusat()]);
+      if (ambilKelasAktif() === kelas) renderPilihanNama();
+    }
+
     function renderPilihanNama() {
       const select = document.getElementById("studentName");
       if (!select) return;
@@ -870,45 +976,64 @@
       const daftar = ambilDaftarNama(kelas);
       select.disabled = false;
       if (daftar.length === 0) {
-        select.innerHTML = `<option value="">-- Belum ada daftar nama untuk ${kelas} --</option>`;
+        const status = statusMuatRoster[kelas];
+        const pesan = status === "loading"
+          ? "Memuat daftar nama..."
+          : (status === "error"
+            ? "Gagal memuat daftar nama. Periksa koneksi, lalu pilih kelas lagi"
+            : `Belum ada daftar nama untuk ${kelas}`);
+        select.innerHTML = `<option value="">-- ${pesan} --</option>`;
         return;
       }
       const paketAktif = ambilPaketTerpilihObj();
       const paketJudul = paketAktif ? paketAktif.judul : "";
       select.innerHTML = `<option value="">-- Pilih Nama Siswa (${kelas}) --</option>`;
       daftar.forEach((nama) => {
-        const sudah = sudahPernahMengerjakan(nama, kelas, paketJudul);
+        const sudah = sudahPernahMengerjakan(nama, kelas, paketJudul) || sudahSelesaiDiServer(nama, kelas, paketJudul);
         const opt = document.createElement("option");
         opt.value = nama;
         opt.disabled = sudah;
         opt.textContent = sudah ? `${nama} (Sudah mengerjakan paket ini)` : nama;
         select.appendChild(opt);
       });
-      if (prevNama && daftar.includes(prevNama) && !sudahPernahMengerjakan(prevNama, kelas, paketJudul)) {
+      if (prevNama && daftar.includes(prevNama) && !sudahPernahMengerjakan(prevNama, kelas, paketJudul) && !sudahSelesaiDiServer(prevNama, kelas, paketJudul)) {
         select.value = prevNama;
       }
     }
 
-    function simpanDaftarNama() {
+    async function simpanDaftarNama() {
       if (!isAdminAuthenticated()) return;
       const kelas = document.getElementById("adminKelasNamaSelect").value;
       const raw = document.getElementById("daftarNamaInput").value || "";
-      const list = raw
+      const list = [...new Set(raw
         .split(/\r?\n/)
         .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+        .filter((s) => s.length > 0))];
       if (list.length === 0) {
         alert("Masukkan minimal satu nama siswa.");
         return;
       }
+      if (list.length > 100 || list.some((n) => n.length > 100)) {
+        alert("Maksimal 100 nama per kelas dan 100 karakter per nama.");
+        return;
+      }
+      // Simpan lokal dahulu (cache + data lama) agar langsung tampil di perangkat ini.
       let customMap = {};
       try {
         customMap = JSON.parse(localStorage.getItem(STORAGE_KEY_NAMA) || "{}") || {};
       } catch (e) {}
       customMap[kelas] = list;
-      localStorage.setItem(STORAGE_KEY_NAMA, JSON.stringify(customMap));
-      alert(`Daftar nama siswa untuk ${kelas} berhasil disimpan!`);
+      try { localStorage.setItem(STORAGE_KEY_NAMA, JSON.stringify(customMap)); } catch (e) {}
+      tulisRosterCache(kelas, list);
       renderPilihanNama();
+
+      const terkonfirmasi = await kirimPayloadKePusat({
+        type: "roster_save",
+        data: { kelas, names: list }
+      });
+      alert(terkonfirmasi
+        ? `Daftar nama ${kelas} (${list.length} siswa) tersimpan di server dan tampil di perangkat siswa.`
+        : `Daftar nama ${kelas} tersimpan di perangkat ini, tetapi BELUM terkonfirmasi server. Cek endpoint lalu klik "Kirim Antrean Gagal" agar terkirim.`);
     }
 
     function simpanKritikSaran(teks, sumber = "Beranda") {
@@ -987,7 +1112,7 @@
       renderDaftarKritik();
     }
 
-    function mulaiUjian() {
+    async function mulaiUjian() {
       if (isHalamanDikunci()) {
         alert("Halaman ujian sedang dikunci oleh guru. Harap tunggu hingga waktu ujian dibuka.");
         return;
@@ -1013,6 +1138,32 @@
 
       if (sudahPernahMengerjakan(nama, kelas, paket.judul)) {
         alert("Siswa ini sudah pernah mengerjakan paket soal tersebut. Satu siswa hanya boleh mengerjakan satu kali per paket soal.");
+        return;
+      }
+
+      // Pengecekan final ke server (berlaku lintas perangkat).
+      if (sedangMemeriksaMulai) return;
+      sedangMemeriksaMulai = true;
+      const btnMulai = document.getElementById("mulaiUjianBtn");
+      const teksAwalBtn = btnMulai ? btnMulai.textContent : "";
+      if (btnMulai) { btnMulai.disabled = true; btnMulai.textContent = "Memeriksa data..."; }
+      let sudahDiServer = null;
+      try {
+        sudahDiServer = await cekPercobaanDiServer(nama, kelas, paket.judul);
+      } finally {
+        sedangMemeriksaMulai = false;
+        if (btnMulai) { btnMulai.disabled = false; btnMulai.textContent = teksAwalBtn; }
+      }
+      if (sudahDiServer === true) {
+        const k = kunciSelesai(kelas, paket.judul);
+        namaSelesaiServer[k] = [...(namaSelesaiServer[k] || []), nama.trim().toLowerCase()];
+        renderPilihanNama();
+        alert("Menurut data server, siswa ini sudah pernah mengerjakan paket soal tersebut. Satu siswa hanya boleh mengerjakan satu kali per paket soal.");
+        return;
+      }
+      // Status kunci dapat berubah selama pengecekan berlangsung.
+      if (isHalamanDikunci() || isPaketDikunci(paket.id)) {
+        alert("Halaman atau paket soal baru saja dikunci oleh guru. Silakan tunggu.");
         return;
       }
 
@@ -1438,7 +1589,7 @@
         for (const original of awal) {
           const item = { ...original };
           // Token admin dapat kedaluwarsa; gunakan sesi admin aktif saat mengirim ulang.
-          if (item.type === "lock_status" && sessionAdminAuthenticated && sessionAdminToken) {
+          if ((item.type === "lock_status" || item.type === "roster_save") && sessionAdminAuthenticated && sessionAdminToken) {
             item.adminToken = sessionAdminToken;
           }
           await kirimSatuPayloadDanKonfirmasi(item);
@@ -1776,7 +1927,7 @@
 
     // ==================== PANEL GURU ====================
 
-    const _TEACHER_TPL_B64 = "CiAgICAgIDxkaXYgY2xhc3M9ImhlYWRlciI+CiAgICAgICAgPGRpdiBjbGFzcz0iYnJhbmQiPlBhbmVsIEd1cnU8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLW91dGxpbmUgYnRuLXNtIiBvbmNsaWNrPSJrZWx1YXJQYW5lbEd1cnUoKSI+VHV0dXAgUGFuZWw8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+UGVueWltcGFuYW4gVGVycHVzYXQgSGFzaWwgVWppYW4gKEtodXN1cyBBZG1pbik8L2gzPgogICAgICAgIDxwPktpcmltIG90b21hdGlzIHJla2FwIG5pbGFpIGRhbiBrcml0aWsgc2FyYW4gc2VsdXJ1aCBzaXN3YSBrZSBzYXR1IGVuZHBvaW50IHRlcnB1c2F0IChtaXNhbG55YSBHb29nbGUgQXBwcyBTY3JpcHQgV2ViIEFwcCkuIFNpc3dhIHRpZGFrIGRhcGF0IG1lbGloYXQgcmVrYXAgbWVsYWx1aSB0YW1waWxhbiBoYWxhbWFuLCB0ZXRhcGkgZW5kcG9pbnQgaGFydXMgZGlhbWFua2FuIGRpIGJhY2tlbmQuIEtvc29uZ2thbiBVUkwgbGFsdSBzaW1wYW4gdW50dWsgbWVub25ha3RpZmthbiBwZW5naXJpbWFuIHRlcnB1c2F0LjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDxsYWJlbCBmb3I9ImNlbnRyYWxFbmRwb2ludElucHV0Ij5VUkwgRW5kcG9pbnQgUGVueWltcGFuYW4gVGVycHVzYXQgKEFwcHMgU2NyaXB0IC8gV2ViaG9vayk8L2xhYmVsPgogICAgICAgICAgPGlucHV0IHR5cGU9InVybCIgaWQ9ImNlbnRyYWxFbmRwb2ludElucHV0IiBwbGFjZWhvbGRlcj0iaHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy8uLi4vZXhlYyIgYXV0b2NvbXBsZXRlPSJvZmYiIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJzaW1wYW5Lb25maWd1cmFzaVB1c2F0KCkiPlNpbXBhbiBFbmRwb2ludDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImtpcmltQW50cmVhblRlcnR1bmRhKCkiPktpcmltIEFudHJlYW4gR2FnYWwgKDApPC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBpZD0iY2VudHJhbFN0YXR1c0luZm8iIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPlJla2FwIE5pbGFpIFBlc2VydGEgKExva2FsIFBlcmFuZ2thdCk8L2gzPgogICAgICAgIDxwPkRhdGEgdGVyc2ltcGFuIGRpIGJyb3dzZXIgcGVyYW5na2F0IGluaS4gQW5kYSBkYXBhdCBtZW5ndW5kdWggcmVrYXAgZGFsYW0gZm9ybWF0IENTViAoYmlzYSBkaWJ1a2EgZGkgRXhjZWwvU3ByZWFkc2hlZXQpLjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJyb3ctMiIgc3R5bGU9Im1hcmdpbi1ib3R0b206MTBweDsiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJ1bmR1aENTVigpIj5VbmR1aCBSZWthcCAoLkNTVik8L2J1dHRvbj4KICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tZGFuZ2VyIiBvbmNsaWNrPSJoYXB1c1Jla2FwKCkiPkhhcHVzIFNlbXVhIFJla2FwPC9idXR0b24+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgY2xhc3M9InRhYmxlLXdyYXAiPgogICAgICAgICAgPHRhYmxlPgogICAgICAgICAgICA8dGhlYWQ+CiAgICAgICAgICAgICAgPHRyPgogICAgICAgICAgICAgICAgPHRoPldha3R1PC90aD4KICAgICAgICAgICAgICAgIDx0aD5OYW1hPC90aD4KICAgICAgICAgICAgICAgIDx0aD5LZWxhczwvdGg+CiAgICAgICAgICAgICAgICA8dGg+UGFrZXQ8L3RoPgogICAgICAgICAgICAgICAgPHRoPkJlbmFyPC90aD4KICAgICAgICAgICAgICAgIDx0aD5OaWxhaTwvdGg+CiAgICAgICAgICAgICAgICA8dGg+TGFuZ2dhcjwvdGg+CiAgICAgICAgICAgICAgPC90cj4KICAgICAgICAgICAgPC90aGVhZD4KICAgICAgICAgICAgPHRib2R5IGlkPSJyZWthcFRhYmxlQm9keSI+PC90Ym9keT4KICAgICAgICAgIDwvdGFibGU+CiAgICAgICAgPC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPktvbnRyb2wgS3VuY2kgSGFsYW1hbiAmYW1wOyBLdW5jaSBTb2FsPC9oMz4KICAgICAgICA8cD5LdW5jaSB0YW1waWxhbiBhd2FsIGFnYXIgc2lzd2EgYmVsdW0gYmlzYSBtZW5nZXJqYWthbiBzZWJlbHVtIHdha3R1IGRpbXVsYWksIGF0YXUga3VuY2kgcGFrZXQgc29hbCB0ZXJ0ZW50dSBhZ2FyIHNpc3dhIHRpZGFrIHNhbGFoIG1lbWJ1a2Egc29hbC48L3A+CgogICAgICAgIDxkaXYgY2xhc3M9InBha2V0LWxvY2stcm93Ij4KICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgIDxzdHJvbmc+S3VuY2kgVGFtcGlsYW4gQXdhbCBVamlhbjwvc3Ryb25nPjxici8+CiAgICAgICAgICAgIDxzcGFuIGlkPSJzdGF0dXNLdW5jaUhhbGFtYW5UZXh0IiBzdHlsZT0iZm9udC1zaXplOjAuOHJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+U3RhdHVzOiBUZXJidWthPC9zcGFuPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8YnV0dG9uIGlkPSJ0b2dnbGVLdW5jaUhhbGFtYW5CdG4iIGNsYXNzPSJidG4gYnRuLWRhbmdlciBidG4tc20iIG9uY2xpY2s9InRvZ2dsZUt1bmNpSGFsYW1hbigpIj5LdW5jaSBIYWxhbWFuPC9idXR0b24+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgc3R5bGU9Im1hcmdpbi10b3A6MTJweDsiPgogICAgICAgICAgPHN0cm9uZyBzdHlsZT0iZm9udC1zaXplOjAuODhyZW07IGRpc3BsYXk6YmxvY2s7IG1hcmdpbi1ib3R0b206NnB4OyI+S3VuY2kgLyBCdWthIFBha2V0IFNvYWw6PC9zdHJvbmc+CiAgICAgICAgICA8ZGl2IGlkPSJkYWZ0YXJLdW5jaVBha2V0Ij48L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+S3JpdGlrIGRhbiBTYXJhbiBNYXN1azwvaDM+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tb3V0bGluZSBidG4tc20iIG9uY2xpY2s9InJlbmRlckRhZnRhcktyaXRpaygpIj5TZWdhcmthbjwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIgYnRuLXNtIiBvbmNsaWNrPSJoYXB1c1NlbXVhS3JpdGlrKCkiPkhhcHVzIFNlbXVhIE1hc3VrYW48L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGlkPSJkYWZ0YXJLcml0aWtDb250YWluZXIiIHN0eWxlPSJmb250LXNpemU6MC44NnJlbTsiPjwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgIDxoMz5LZWxvbGEgRGFmdGFyIE5hbWEgU2lzd2E8L2gzPgogICAgICAgIDxwPlBpbGloIGtlbGFzIGxhbHUgbWFzdWtrYW4gc2F0dSBuYW1hIHNpc3dhIHBlciBiYXJpcyB1bnR1ayBtZW1wZXJiYXJ1aSBkYWZ0YXIgbmFtYSBzaXN3YSBkaSBwZXJhbmdrYXQgaW5pLiBEYWZ0YXIgdGlkYWsgbGFnaSBkaXRhbmFtIGRpIEhUTUwgcHVibGlrOyBtYXN1a2thbiBrZW1iYWxpIGRhZnRhciBqaWthIHBlcmFuZ2thdCBpbmkgYmVsdW0gbWVtaWxpa2kgZGF0YSBsb2thbC48L3A+CiAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICA8bGFiZWwgZm9yPSJhZG1pbktlbGFzTmFtYVNlbGVjdCI+UGlsaWggS2VsYXM8L2xhYmVsPgogICAgICAgICAgPHNlbGVjdCBpZD0iYWRtaW5LZWxhc05hbWFTZWxlY3QiIG9uY2hhbmdlPSJtdWF0VGV4dGFyZWFOYW1hQWRtaW4oKSI+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEEiPktlbGFzIElWIEE8L29wdGlvbj4KICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iS2VsYXMgSVYgQiI+S2VsYXMgSVYgQjwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBDIj5LZWxhcyBJViBDPC9vcHRpb24+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEQiPktlbGFzIElWIEQ8L29wdGlvbj4KICAgICAgICAgIDwvc2VsZWN0PgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPHRleHRhcmVhIGlkPSJkYWZ0YXJOYW1hSW5wdXQiIHJvd3M9IjUiIHBsYWNlaG9sZGVyPSJTYXR1IG5hbWEgc2lzd2EgcGVyIGJhcmlzLi4uIj48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tcHJpbWFyeSIgb25jbGljaz0ic2ltcGFuRGFmdGFyTmFtYSgpIj5TaW1wYW4gRGFmdGFyIE5hbWE8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+VGFtYmFoIFBha2V0IFNvYWwgQmFydSAoRm9ybWF0IEpTT04pPC9oMz4KICAgICAgICA8cD5UZW1wZWxrYW4gSlNPTiBkZW5nYW4gZm9ybWF0OiA8Y29kZT57Imp1ZHVsIjoiLi4uIiwiZHVyYXNpTWVuaXQiOjEwLCJzb2FsIjpbeyJxIjoiLi4uIiwib3BzaSI6WyJBIiwiQiIsIkMiLCJEIl0sImphd2FiYW4iOjB9XX08L2NvZGU+IChpbmRla3MgPGNvZGU+amF3YWJhbjwvY29kZT4gbXVsYWkgZGFyaSAwKS48L3A+CiAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICA8dGV4dGFyZWEgaWQ9Impzb25QYWtldElucHV0IiByb3dzPSI2IiBwbGFjZWhvbGRlcj0ieyZxdW90O2p1ZHVsJnF1b3Q7OiZxdW90O0xhdGloYW4gSVBBJnF1b3Q7LCZxdW90O2R1cmFzaU1lbml0JnF1b3Q7OjEwLCZxdW90O3NvYWwmcXVvdDs6W3smcXVvdDtxJnF1b3Q7OiZxdW90O1BsYW5ldCB0ZXJkZWthdCBtYXRhaGFyaT8mcXVvdDssJnF1b3Q7b3BzaSZxdW90OzpbJnF1b3Q7TWVya3VyaXVzJnF1b3Q7LCZxdW90O1ZlbnVzJnF1b3Q7LCZxdW90O0J1bWkmcXVvdDssJnF1b3Q7TWFycyZxdW90O10sJnF1b3Q7amF3YWJhbiZxdW90OzowfV19Ij48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tcHJpbWFyeSIgb25jbGljaz0ic2ltcGFuUGFrZXRCYXJ1KCkiPlNpbXBhbiBQYWtldCBTb2FsPC9idXR0b24+CiAgICAgIDwvZGl2Pg==";
+    const _TEACHER_TPL_B64 = "CiAgICAgIDxkaXYgY2xhc3M9ImhlYWRlciI+CiAgICAgICAgPGRpdiBjbGFzcz0iYnJhbmQiPlBhbmVsIEd1cnU8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLW91dGxpbmUgYnRuLXNtIiBvbmNsaWNrPSJrZWx1YXJQYW5lbEd1cnUoKSI+VHV0dXAgUGFuZWw8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+UGVueWltcGFuYW4gVGVycHVzYXQgSGFzaWwgVWppYW4gKEtodXN1cyBBZG1pbik8L2gzPgogICAgICAgIDxwPktpcmltIG90b21hdGlzIHJla2FwIG5pbGFpIGRhbiBrcml0aWsgc2FyYW4gc2VsdXJ1aCBzaXN3YSBrZSBzYXR1IGVuZHBvaW50IHRlcnB1c2F0IChtaXNhbG55YSBHb29nbGUgQXBwcyBTY3JpcHQgV2ViIEFwcCkuIFNpc3dhIHRpZGFrIGRhcGF0IG1lbGloYXQgcmVrYXAgbWVsYWx1aSB0YW1waWxhbiBoYWxhbWFuLCB0ZXRhcGkgZW5kcG9pbnQgaGFydXMgZGlhbWFua2FuIGRpIGJhY2tlbmQuIEtvc29uZ2thbiBVUkwgbGFsdSBzaW1wYW4gdW50dWsgbWVub25ha3RpZmthbiBwZW5naXJpbWFuIHRlcnB1c2F0LjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDxsYWJlbCBmb3I9ImNlbnRyYWxFbmRwb2ludElucHV0Ij5VUkwgRW5kcG9pbnQgUGVueWltcGFuYW4gVGVycHVzYXQgKEFwcHMgU2NyaXB0IC8gV2ViaG9vayk8L2xhYmVsPgogICAgICAgICAgPGlucHV0IHR5cGU9InVybCIgaWQ9ImNlbnRyYWxFbmRwb2ludElucHV0IiBwbGFjZWhvbGRlcj0iaHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy8uLi4vZXhlYyIgYXV0b2NvbXBsZXRlPSJvZmYiIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJzaW1wYW5Lb25maWd1cmFzaVB1c2F0KCkiPlNpbXBhbiBFbmRwb2ludDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImtpcmltQW50cmVhblRlcnR1bmRhKCkiPktpcmltIEFudHJlYW4gR2FnYWwgKDApPC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBpZD0iY2VudHJhbFN0YXR1c0luZm8iIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPlJla2FwIE5pbGFpIFBlc2VydGEgKExva2FsIFBlcmFuZ2thdCk8L2gzPgogICAgICAgIDxwPkRhdGEgdGVyc2ltcGFuIGRpIGJyb3dzZXIgcGVyYW5na2F0IGluaS4gQW5kYSBkYXBhdCBtZW5ndW5kdWggcmVrYXAgZGFsYW0gZm9ybWF0IENTViAoYmlzYSBkaWJ1a2EgZGkgRXhjZWwvU3ByZWFkc2hlZXQpLjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJyb3ctMiIgc3R5bGU9Im1hcmdpbi1ib3R0b206MTBweDsiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJ1bmR1aENTVigpIj5VbmR1aCBSZWthcCAoLkNTVik8L2J1dHRvbj4KICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tZGFuZ2VyIiBvbmNsaWNrPSJoYXB1c1Jla2FwKCkiPkhhcHVzIFNlbXVhIFJla2FwPC9idXR0b24+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgY2xhc3M9InRhYmxlLXdyYXAiPgogICAgICAgICAgPHRhYmxlPgogICAgICAgICAgICA8dGhlYWQ+CiAgICAgICAgICAgICAgPHRyPgogICAgICAgICAgICAgICAgPHRoPldha3R1PC90aD4KICAgICAgICAgICAgICAgIDx0aD5OYW1hPC90aD4KICAgICAgICAgICAgICAgIDx0aD5LZWxhczwvdGg+CiAgICAgICAgICAgICAgICA8dGg+UGFrZXQ8L3RoPgogICAgICAgICAgICAgICAgPHRoPkJlbmFyPC90aD4KICAgICAgICAgICAgICAgIDx0aD5OaWxhaTwvdGg+CiAgICAgICAgICAgICAgICA8dGg+TGFuZ2dhcjwvdGg+CiAgICAgICAgICAgICAgPC90cj4KICAgICAgICAgICAgPC90aGVhZD4KICAgICAgICAgICAgPHRib2R5IGlkPSJyZWthcFRhYmxlQm9keSI+PC90Ym9keT4KICAgICAgICAgIDwvdGFibGU+CiAgICAgICAgPC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPktvbnRyb2wgS3VuY2kgSGFsYW1hbiAmYW1wOyBLdW5jaSBTb2FsPC9oMz4KICAgICAgICA8cD5LdW5jaSB0YW1waWxhbiBhd2FsIGFnYXIgc2lzd2EgYmVsdW0gYmlzYSBtZW5nZXJqYWthbiBzZWJlbHVtIHdha3R1IGRpbXVsYWksIGF0YXUga3VuY2kgcGFrZXQgc29hbCB0ZXJ0ZW50dSBhZ2FyIHNpc3dhIHRpZGFrIHNhbGFoIG1lbWJ1a2Egc29hbC48L3A+CgogICAgICAgIDxkaXYgY2xhc3M9InBha2V0LWxvY2stcm93Ij4KICAgICAgICAgIDxkaXY+CiAgICAgICAgICAgIDxzdHJvbmc+S3VuY2kgVGFtcGlsYW4gQXdhbCBVamlhbjwvc3Ryb25nPjxici8+CiAgICAgICAgICAgIDxzcGFuIGlkPSJzdGF0dXNLdW5jaUhhbGFtYW5UZXh0IiBzdHlsZT0iZm9udC1zaXplOjAuOHJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+U3RhdHVzOiBUZXJidWthPC9zcGFuPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8YnV0dG9uIGlkPSJ0b2dnbGVLdW5jaUhhbGFtYW5CdG4iIGNsYXNzPSJidG4gYnRuLWRhbmdlciBidG4tc20iIG9uY2xpY2s9InRvZ2dsZUt1bmNpSGFsYW1hbigpIj5LdW5jaSBIYWxhbWFuPC9idXR0b24+CiAgICAgICAgPC9kaXY+CgogICAgICAgIDxkaXYgc3R5bGU9Im1hcmdpbi10b3A6MTJweDsiPgogICAgICAgICAgPHN0cm9uZyBzdHlsZT0iZm9udC1zaXplOjAuODhyZW07IGRpc3BsYXk6YmxvY2s7IG1hcmdpbi1ib3R0b206NnB4OyI+S3VuY2kgLyBCdWthIFBha2V0IFNvYWw6PC9zdHJvbmc+CiAgICAgICAgICA8ZGl2IGlkPSJkYWZ0YXJLdW5jaVBha2V0Ij48L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+S3JpdGlrIGRhbiBTYXJhbiBNYXN1azwvaDM+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tb3V0bGluZSBidG4tc20iIG9uY2xpY2s9InJlbmRlckRhZnRhcktyaXRpaygpIj5TZWdhcmthbjwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIgYnRuLXNtIiBvbmNsaWNrPSJoYXB1c1NlbXVhS3JpdGlrKCkiPkhhcHVzIFNlbXVhIE1hc3VrYW48L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGlkPSJkYWZ0YXJLcml0aWtDb250YWluZXIiIHN0eWxlPSJmb250LXNpemU6MC44NnJlbTsiPjwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgIDxoMz5LZWxvbGEgRGFmdGFyIE5hbWEgU2lzd2E8L2gzPgogICAgICAgIDxwPlBpbGloIGtlbGFzIGxhbHUgbWFzdWtrYW4gc2F0dSBuYW1hIHNpc3dhIHBlciBiYXJpcy4gRGFmdGFyIGRpc2ltcGFuIGRpIHNlcnZlciAoQXBwcyBTY3JpcHQpIHNlaGluZ2dhIG90b21hdGlzIG11bmN1bCBkaSBwZXJhbmdrYXQgc2lzd2EuIE5hbWEgdGlkYWsgZGl0YW5hbSBkaSBIVE1MIHB1Ymxpay48L3A+CiAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICA8bGFiZWwgZm9yPSJhZG1pbktlbGFzTmFtYVNlbGVjdCI+UGlsaWggS2VsYXM8L2xhYmVsPgogICAgICAgICAgPHNlbGVjdCBpZD0iYWRtaW5LZWxhc05hbWFTZWxlY3QiIG9uY2hhbmdlPSJtdWF0VGV4dGFyZWFOYW1hQWRtaW4oKSI+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEEiPktlbGFzIElWIEE8L29wdGlvbj4KICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iS2VsYXMgSVYgQiI+S2VsYXMgSVYgQjwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBDIj5LZWxhcyBJViBDPC9vcHRpb24+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEQiPktlbGFzIElWIEQ8L29wdGlvbj4KICAgICAgICAgIDwvc2VsZWN0PgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPHRleHRhcmVhIGlkPSJkYWZ0YXJOYW1hSW5wdXQiIHJvd3M9IjUiIHBsYWNlaG9sZGVyPSJTYXR1IG5hbWEgc2lzd2EgcGVyIGJhcmlzLi4uIj48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tcHJpbWFyeSIgb25jbGljaz0ic2ltcGFuRGFmdGFyTmFtYSgpIj5TaW1wYW4gRGFmdGFyIE5hbWE8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+VGFtYmFoIFBha2V0IFNvYWwgQmFydSAoRm9ybWF0IEpTT04pPC9oMz4KICAgICAgICA8cD5UZW1wZWxrYW4gSlNPTiBkZW5nYW4gZm9ybWF0OiA8Y29kZT57Imp1ZHVsIjoiLi4uIiwiZHVyYXNpTWVuaXQiOjEwLCJzb2FsIjpbeyJxIjoiLi4uIiwib3BzaSI6WyJBIiwiQiIsIkMiLCJEIl0sImphd2FiYW4iOjB9XX08L2NvZGU+IChpbmRla3MgPGNvZGU+amF3YWJhbjwvY29kZT4gbXVsYWkgZGFyaSAwKS48L3A+CiAgICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncm91cCI+CiAgICAgICAgICA8dGV4dGFyZWEgaWQ9Impzb25QYWtldElucHV0IiByb3dzPSI2IiBwbGFjZWhvbGRlcj0ieyZxdW90O2p1ZHVsJnF1b3Q7OiZxdW90O0xhdGloYW4gSVBBJnF1b3Q7LCZxdW90O2R1cmFzaU1lbml0JnF1b3Q7OjEwLCZxdW90O3NvYWwmcXVvdDs6W3smcXVvdDtxJnF1b3Q7OiZxdW90O1BsYW5ldCB0ZXJkZWthdCBtYXRhaGFyaT8mcXVvdDssJnF1b3Q7b3BzaSZxdW90OzpbJnF1b3Q7TWVya3VyaXVzJnF1b3Q7LCZxdW90O1ZlbnVzJnF1b3Q7LCZxdW90O0J1bWkmcXVvdDssJnF1b3Q7TWFycyZxdW90O10sJnF1b3Q7amF3YWJhbiZxdW90OzowfV19Ij48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tcHJpbWFyeSIgb25jbGljaz0ic2ltcGFuUGFrZXRCYXJ1KCkiPlNpbXBhbiBQYWtldCBTb2FsPC9idXR0b24+CiAgICAgIDwvZGl2Pg==";
     function isAdminAuthenticated() {
       return sessionAdminAuthenticated === true;
     }
@@ -1804,11 +1955,18 @@
       document.getElementById("pinModal").classList.add("hidden");
     }
 
-    function muatTextareaNamaAdmin() {
+    async function muatTextareaNamaAdmin() {
       const sel = document.getElementById("adminKelasNamaSelect");
       const ta = document.getElementById("daftarNamaInput");
       if (!sel || !ta) return;
-      ta.value = ambilDaftarNama(sel.value).join("\n");
+      const kelas = sel.value;
+      const awal = ambilDaftarNama(kelas).join("\n");
+      ta.value = awal;
+      // Segarkan dari server, tetapi jangan menimpa jika admin sudah mulai mengetik atau ganti kelas.
+      const berhasil = await muatDaftarNamaDariPusat(kelas);
+      if (berhasil && sel.value === kelas && ta.value === awal) {
+        ta.value = ambilDaftarNama(kelas).join("\n");
+      }
     }
 
     async function verifikasiPinGuru() {
