@@ -451,6 +451,28 @@
       color: var(--muted);
       text-align: left;
     }
+
+    /* Kredit pengembang: tetap terlihat di kiri bawah tanpa mengganggu kontrol ujian. */
+    .developer-credit {
+      position: fixed;
+      left: max(16px, calc((100vw - 680px) / 2 + 16px));
+      bottom: 8px;
+      z-index: 15;
+      max-width: calc(100vw - 32px);
+      padding: 3px 8px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 8px;
+      background: rgba(241, 245, 249, 0.94);
+      color: var(--muted);
+      font-size: 0.70rem;
+      line-height: 1.35;
+      pointer-events: none;
+      text-align: left;
+    }
+
+    body {
+      padding-bottom: 34px;
+    }
   </style>
 </head>
 <body>
@@ -595,6 +617,10 @@
     <!-- ==================== HALAMAN PANEL GURU ==================== -->
     <div id="teacherView" class="hidden">
     </div>
+  </div>
+
+  <div class="developer-credit" aria-label="Kredit pengembang">
+    Dikembangkan oleh Aljody Pahlevi Naslim, S.Pd.
   </div>
 
   <!-- Modal PIN Guru -->
