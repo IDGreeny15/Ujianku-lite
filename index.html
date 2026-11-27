@@ -6,12 +6,10 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="description" content="Portal Asesmen Akhir Semester SD Negeri 37 Kendari dengan sesi ujian terverifikasi server, pengacakan soal, penilaian server, rekap nilai, dan panel admin." />
-  <link rel="canonical" href="https://sdn37kendari.sch.id/" />
   <meta property="og:title" content="Asesmen Akhir Semester — SD Negeri 37 Kendari" />
   <meta property="og:description" content="Portal Asesmen Akhir Semester SD Negeri 37 Kendari dengan mode anti-cheat, pengacakan soal, dan rekap hasil ujian." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Crect width='640' height='360' fill='%232563eb'/%3E%3Ctext x='50%25' y='46%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='36' font-weight='bold'%3ESD NEGERI 37 KENDARI%3C/text%3E%3Ctext x='50%25' y='60%25' dominant-baseline='middle' text-anchor='middle' fill='%23dbeafe' font-family='sans-serif' font-size='22'%3EAsesmen Akhir Semester%3C/text%3E%3C/svg%3E" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='26' font-weight='bold'%3E37%3C/text%3E%3C/svg%3E" />
   <title>SD Negeri 37 Kendari</title>
   <style>
@@ -455,10 +453,10 @@
     /* Kredit pengembang: tetap terlihat di kiri bawah tanpa mengganggu kontrol ujian. */
     .developer-credit {
       position: fixed;
-      left: max(16px, calc((100vw - 680px) / 2 + 16px));
+      left: max(16px, calc((100% - 680px) / 2 + 16px));
       bottom: 8px;
       z-index: 15;
-      max-width: calc(100vw - 32px);
+      max-width: calc(100% - 32px);
       padding: 3px 8px;
       border: 1px solid rgba(226, 232, 240, 0.9);
       border-radius: 8px;
@@ -551,13 +549,13 @@
 
           <div class="form-group">
             <label for="kritikSaranInput">Kritik dan Saran</label>
-            <textarea id="kritikSaranInput" rows="2" placeholder="Tulis kritik atau saran Anda (opsional)..."></textarea>
+            <textarea id="kritikSaranInput" rows="2" maxlength="3000" placeholder="Tulis kritik atau saran Anda (opsional)..."></textarea>
           </div>
 
           <button id="mulaiUjianBtn" class="btn btn-primary" onclick="mulaiUjian()">Mulai Ujian Sekarang</button>
         </div>
       </div>
-      <div class="version-footer">version 0.7</div>
+      <div class="version-footer">version 0.7.5 • uji coba 2 perangkat</div>
     </div>
 
     <!-- ==================== HALAMAN PENGERJAAN SOAL ==================== -->
@@ -606,10 +604,10 @@
 
         <div class="form-group" style="margin-top:12px;">
           <label for="resultKritikInput">Kritik dan Saran</label>
-          <textarea id="resultKritikInput" rows="2" placeholder="Tuliskan kritik dan saran setelah mengerjakan soal..."></textarea>
+          <textarea id="resultKritikInput" rows="2" maxlength="3000" placeholder="Tuliskan kritik dan saran setelah mengerjakan soal..."></textarea>
         </div>
         <button class="btn btn-primary" style="margin-bottom:10px;" onclick="kirimKritikSaranHasil()">Kirim Kritik &amp; Saran</button>
-        <button class="btn btn-success" style="margin-bottom:10px;" onclick="salinBuktiHasil()">Simpan Bukti Hasil (.JPG)</button>
+        <button class="btn btn-success" style="margin-bottom:10px;" onclick="unduhBuktiHasil()">Simpan Bukti Hasil (.JPG)</button>
         <button class="btn btn-outline" onclick="kembaliKeBeranda()">Kembali ke Beranda</button>
       </div>
     </div>
@@ -641,6 +639,9 @@
   <script>
     const STORAGE_KEY_REKAP = "ujianku_lite_rekap_v1";
     const STORAGE_KEY_PAKET = "ujianku_lite_paket_v1";
+    // Data server menjadi sumber utama panel admin; cache lokal hanya fallback.
+    let rekapPusatCache = null;
+    let kritikPusatCache = null;
     function isStorageAvailable() {
       try {
         const testKey = "__ujianku_test__";
@@ -689,7 +690,6 @@
 
     const MAX_VIOLATIONS = 3;
 
-    const PAKET_BAWAAN = [];
     const STORAGE_KEY_PACKAGE_META = "ujianku_package_metadata_v1";
 
     let state = {
@@ -711,7 +711,8 @@
       pendingSubmission: null,
       pendingReason: "",
       paketId: "",
-      submitting: false
+      submitting: false,
+      clockOffset: 0
     };
 
     function ambilSemuaPaket() {
@@ -860,25 +861,6 @@
       return paketList[idx] || paketList[0] || null;
     }
 
-    function sudahPernahMengerjakan(nama, kelas, paketJudul) {
-      const targetNama = String(nama || "").trim().toLowerCase();
-      const targetKelas = String(kelas || "").trim().toLowerCase();
-      const targetPaket = String(paketJudul || "").trim().toLowerCase();
-      if (!targetNama) return false;
-      const rekap = ambilRekap();
-      return rekap.some((r) => {
-        const rNama = String(r.nama || "").trim().toLowerCase();
-        const rKelas = String(r.kelas || "").trim().toLowerCase();
-        const rPaket = String(r.paket || "").trim().toLowerCase();
-        if (targetKelas && targetPaket) {
-          return rNama === targetNama && rKelas === targetKelas && rPaket === targetPaket;
-        }
-        if (targetPaket) {
-          return rNama === targetNama && rPaket === targetPaket;
-        }
-        return rNama === targetNama;
-      });
-    }
 
     // ==================== DAFTAR NAMA DARI SERVER ====================
     const statusMuatRoster = {};
@@ -910,7 +892,16 @@
       statusMuatRoster[kelas] = "loading";
       try {
         if (!isAdminAuthenticated() || !sessionAdminToken) throw new Error("Sesi admin diperlukan untuk membaca daftar nama.");
-        const data = await panggilPusatJsonp({ action: "getRoster", kelas, adminToken: sessionAdminToken }, 10000);
+        // Token dikirim lewat body POST, bukan query string URL.
+        const nonce = buatIdPengiriman();
+        const data = await kirimPostDanAmbilHasil({
+          type: "roster_get",
+          deliveryId: buatIdPengiriman(),
+          school: "SD Negeri 37 Kendari",
+          sentAt: new Date().toISOString(),
+          adminToken: sessionAdminToken,
+          data: { nonce, kelas }
+        }, "rosterResult", nonce);
         if (!data || data.ok !== true || !Array.isArray(data.names)) throw new Error("Respons tidak valid.");
         const names = [...new Set(data.names.map((n) => String(n || "").trim()).filter(Boolean))];
         tulisRosterCache(kelas, names);
@@ -1019,16 +1010,18 @@
       if (simpanKritikSaran(el.value, "Halaman Hasil")) {
         el.value = "";
         alert("Kritik dan saran berhasil dikirim!");
+      } else {
+        alert("Kritik dan saran belum dapat disimpan. Coba lagi.");
       }
     }
 
     function renderDaftarKritik() {
       const container = document.getElementById("daftarKritikContainer");
       if (!container) return;
-      let list = [];
-      try {
-        list = JSON.parse(localStorage.getItem(STORAGE_KEY_KRITIK) || "[]");
-      } catch (e) {}
+      let list = Array.isArray(kritikPusatCache) ? kritikPusatCache : [];
+      if (!Array.isArray(kritikPusatCache)) {
+        try { list = JSON.parse(localStorage.getItem(STORAGE_KEY_KRITIK) || "[]"); } catch (e) {}
+      }
       if (!Array.isArray(list) || list.length === 0) {
         container.innerHTML = '<p style="margin:0;">Belum ada kritik dan saran.</p>';
         return;
@@ -1045,7 +1038,7 @@
 
     function hapusSemuaKritik() {
       if (!isAdminAuthenticated()) return;
-      if (!confirm("Hapus seluruh kritik dan saran yang masuk?")) return;
+      if (!confirm("Hapus cache kritik dan saran yang tersimpan di HP ini? Data pada Spreadsheet/server tidak ikut terhapus.")) return;
       localStorage.removeItem(STORAGE_KEY_KRITIK);
       renderDaftarKritik();
     }
@@ -1118,6 +1111,14 @@
           throw new Error("Status kunci ujian berubah. Hubungi guru sebelum memulai kembali.");
         }
 
+        // Selisih jam server-perangkat, agar timer tidak terpengaruh jam HP yang meleset.
+        const endAtServer = Number(result.endAt);
+        if (!Number.isFinite(endAtServer) || endAtServer <= 0) {
+          throw new Error("Server tidak mengirimkan waktu ujian yang valid.");
+        }
+        const serverNow = Number(result.serverNow);
+        const clockOffset = Number.isFinite(serverNow) && serverNow > 0 ? serverNow - Date.now() : 0;
+
         pendingStartPacket = null;
         state = {
           active: true,
@@ -1128,8 +1129,9 @@
           questions: result.questions,
           answers: {},
           currentIndex: 0,
-          remainingSeconds: Math.max(0, Math.ceil((Number(result.endAt) - Date.now()) / 1000)),
-          endTime: Number(result.endAt),
+          remainingSeconds: Math.max(0, Math.ceil((endAtServer - (Date.now() + clockOffset)) / 1000)),
+          endTime: endAtServer,
+          clockOffset,
           violations: 0,
           lastViolationTime: 0,
           timerId: null,
@@ -1154,11 +1156,18 @@
         renderSoal();
         renderNavGrid();
         mulaiTimer();
-        kunciRiwayatBrowser();
+        riwayatExtra = 0;
+        kunciRiwayatBrowser(2);
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
           const banner = document.getElementById("warningBanner");
           banner.style.display = "block";
           banner.textContent = "Perangkat/browser tidak mengaktifkan fullscreen. Ikuti arahan pengawas.";
+        }
+        // Kritik & saran dari beranda sebelumnya tidak pernah dikirim; kirim sekarang.
+        const kritikAwal = document.getElementById("kritikSaranInput");
+        if (kritikAwal && kritikAwal.value.trim()) {
+          simpanKritikSaran(kritikAwal.value, "Beranda");
+          kritikAwal.value = "";
         }
         const codeInput = document.getElementById("examAccessCode");
         if (codeInput) codeInput.value = "";
@@ -1178,7 +1187,7 @@
       state.timerId = setInterval(() => {
         if (!state.active || state.submitted) return;
         // Hitung dari waktu akhir absolut agar tidak melambat saat tab di latar belakang.
-        state.remainingSeconds = Math.ceil((state.endTime - Date.now()) / 1000);
+        state.remainingSeconds = Math.ceil((state.endTime - (Date.now() + (state.clockOffset || 0))) / 1000);
         updateTimerDisplay();
         if (state.remainingSeconds <= 0) {
           selesaikanUjian("Waktu ujian telah habis.");
@@ -1421,6 +1430,36 @@
       return await panggilPusatJsonp({ action, nonce }, 15000);
     }
 
+    async function muatDataAdminDariPusat(senyap = false) {
+      if (!isAdminAuthenticated() || !sessionAdminToken || !ambilEndpointPusat()) return false;
+      const nonce = buatIdPengiriman();
+      try {
+        const result = await kirimPostDanAmbilHasil({
+          type: "admin_data",
+          deliveryId: buatIdPengiriman(),
+          school: "SD Negeri 37 Kendari",
+          sentAt: new Date().toISOString(),
+          adminToken: sessionAdminToken,
+          data: { nonce }
+        }, "adminDataResult", nonce);
+        if (!result || result.ok !== true || !Array.isArray(result.rekap) || !Array.isArray(result.kritik)) {
+          throw new Error(result && result.error ? result.error : "Respons data admin tidak valid.");
+        }
+        rekapPusatCache = result.rekap;
+        kritikPusatCache = result.kritik;
+        renderTabelRekap();
+        renderDaftarKritik();
+        const info = document.getElementById("adminDataSyncInfo");
+        if (info) info.textContent = `Data server diperbarui. ${rekapPusatCache.length} nilai dan ${kritikPusatCache.length} kritik/saran.`;
+        return true;
+      } catch (e) {
+        const info = document.getElementById("adminDataSyncInfo");
+        if (info) info.textContent = `Data server belum berhasil dimuat: ${e.message || "koneksi bermasalah"}. Menampilkan cache perangkat jika tersedia.`;
+        if (!senyap) alert(`Gagal memuat data server: ${e.message || "koneksi bermasalah"}`);
+        return false;
+      }
+    }
+
     function ambilAtauBuatAdminClientId() {
       try {
         let id = localStorage.getItem(ADMIN_CLIENT_ID_KEY);
@@ -1570,24 +1609,42 @@
         sentAt: new Date().toISOString(),
         ...payload
       };
-      if (sessionAdminAuthenticated && sessionAdminToken) {
-        packet.adminToken = sessionAdminToken;
+      // Status kunci bersifat "keadaan terakhir": buang yang lama dari antrean agar
+      // pengiriman ulang tidak menimpa status terbaru dengan status basi.
+      if (packet.type === "lock_status") {
+        simpanAntreanPusat(ambilAntreanPusat().filter((entry) => entry.type !== "lock_status"));
       }
       // Simpan dahulu. Item hanya dihapus setelah backend mengonfirmasi ID-nya.
       simpanKeAntreanJikaBelumAda(packet);
-      return kirimSatuPayloadDanKonfirmasi(packet);
+      // Token admin hanya dilampirkan saat mengirim; tidak pernah ikut tersimpan di antrean localStorage.
+      const dikirim = (sessionAdminAuthenticated && sessionAdminToken)
+        ? { ...packet, adminToken: sessionAdminToken }
+        : packet;
+      return kirimSatuPayloadDanKonfirmasi(dikirim);
     }
 
     let sedangMengirimAntrean = false;
 
-    async function kirimAntreanTertunda() {
+    const ANTREAN_UJIAN_MAKS_UMUR_MS = 6 * 60 * 60 * 1000;
+
+    async function kirimAntreanTertunda(senyap = false) {
       if (sedangMengirimAntrean) return;
       const endpoint = ambilEndpointPusat();
       if (!endpoint) {
-        alert("Penyimpanan terpusat sedang dinonaktifkan. Aktifkan endpoint terlebih dahulu untuk mengirim antrean.");
+        if (!senyap) alert("Penyimpanan terpusat sedang dinonaktifkan. Aktifkan endpoint terlebih dahulu untuk mengirim antrean.");
         return;
       }
-      const awal = ambilAntreanPusat();
+      // Buang pengumpulan ujian yang sudah terlalu lama (sesi di server pasti sudah berakhir).
+      const sekarang = Date.now();
+      const bersih = ambilAntreanPusat().filter((it) => {
+        if (it && it.type === "exam_submit") {
+          const umur = sekarang - Date.parse(it.sentAt || "");
+          if (Number.isFinite(umur) && umur > ANTREAN_UJIAN_MAKS_UMUR_MS) return false;
+        }
+        return true;
+      });
+      simpanAntreanPusat(bersih);
+      const awal = bersih;
       if (awal.length === 0) {
         perbaruiInfoPusatAdmin();
         return;
@@ -1596,6 +1653,8 @@
       sedangMengirimAntrean = true;
       try {
         for (const original of awal) {
+          // Jangan menabrak pengiriman yang sedang berjalan dari tombol/alur ujian.
+          if (state.submitting && state.pendingSubmission && original.deliveryId === state.pendingSubmission.deliveryId) continue;
           const item = { ...original };
           // Token admin dapat kedaluwarsa; gunakan sesi admin aktif saat mengirim ulang.
           if ((item.type === "lock_status" || item.type === "roster_save" || item.type === "package_sync" || item.type === "package_upsert") && sessionAdminAuthenticated && sessionAdminToken) {
@@ -1621,6 +1680,7 @@
       }
       document.body.classList.remove("anti-cheat-active");
       keluarFullscreen();
+      bersihkanRiwayatUjian();
       document.getElementById("examTopbar").classList.add("hidden");
       document.getElementById("examView").classList.add("hidden");
       document.getElementById("resultView").classList.remove("hidden");
@@ -1729,22 +1789,44 @@
     }
 
     function ambilRekap() {
+      if (Array.isArray(rekapPusatCache)) return rekapPusatCache;
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
-      } catch (e) {
-        return [];
-      }
+        const local = JSON.parse(localStorage.getItem(STORAGE_KEY_REKAP) || "[]");
+        return Array.isArray(local) ? local : [];
+      } catch (e) { return []; }
     }
 
-    function salinBuktiHasil() {
+    function unduhBuktiHasil() {
       if (!state.lastResultText) return;
-      const lines = state.lastResultText.split("\n");
-      const canvas = document.createElement("canvas");
       const width = 900;
       const padding = 54;
       const headerHeight = 140;
       const lineHeight = 52;
-      const height = headerHeight + lines.length * lineHeight + padding * 2;
+      const maxTextWidth = width - padding * 2 - 20;
+      const fontNormal = "600 27px system-ui, -apple-system, sans-serif";
+      const fontNilai = "bold 36px system-ui, -apple-system, sans-serif";
+
+      // Bungkus baris panjang (nama/judul paket) agar tidak terpotong di tepi gambar.
+      const probe = document.createElement("canvas").getContext("2d");
+      const rows = [];
+      state.lastResultText.split("\n").slice(1).forEach((line) => {
+        const isNilai = line.startsWith("Nilai:");
+        probe.font = isNilai ? fontNilai : fontNormal;
+        let current = "";
+        line.split(/\s+/).filter(Boolean).forEach((word) => {
+          const test = current ? current + " " + word : word;
+          if (current && probe.measureText(test).width > maxTextWidth) {
+            rows.push({ text: current, isNilai });
+            current = word;
+          } else {
+            current = test;
+          }
+        });
+        if (current) rows.push({ text: current, isNilai });
+      });
+
+      const canvas = document.createElement("canvas");
+      const height = headerHeight + rows.length * lineHeight + padding * 2;
       canvas.width = width;
       canvas.height = height;
 
@@ -1768,23 +1850,19 @@
       ctx.fillText("Bukti Hasil Asesmen Akhir Semester", padding, 118);
 
       let y = 195;
-      lines.forEach((line, idx) => {
-        if (idx === 0) return;
-        const isNilai = line.startsWith("Nilai:");
-        ctx.fillStyle = isNilai ? "#16a34a" : "#0f172a";
-        ctx.font = isNilai
-          ? "bold 36px system-ui, -apple-system, sans-serif"
-          : "600 27px system-ui, -apple-system, sans-serif";
-        ctx.fillText(line, padding, y);
+      rows.forEach((row) => {
+        ctx.fillStyle = row.isNilai ? "#16a34a" : "#0f172a";
+        ctx.font = row.isNilai ? fontNilai : fontNormal;
+        ctx.fillText(row.text, padding, y);
         y += lineHeight;
       });
 
       ctx.fillStyle = "#64748b";
       ctx.font = "italic 20px system-ui, -apple-system, sans-serif";
-      ctx.fillText("Dokumen digital resmi hasil ujian siswa", padding, height - 55);
+      ctx.fillText("Bukti hasil ujian. Nilai resmi tercatat di server sekolah.", padding, height - 55);
 
-      const safeNama = (state.student && state.student.nama ? state.student.nama : "siswa")
-        .replace(/[^a-zA-Z0-9_-]+/g, "_");
+      const safeNama = ((state.student && state.student.nama) ? state.student.nama : "siswa")
+        .replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "siswa";
       const filename = `Bukti_Hasil_${safeNama}.jpg`;
 
       canvas.toBlob((blob) => {
@@ -1821,6 +1899,8 @@
     async function sinkronkanStatusKunciDariPusat(paksa = false) {
       if (sedangSinkron || state.active) return;
       if (!paksa && Date.now() < jedaSinkronSetelahAdmin) return;
+      // Selama perubahan kunci dari admin belum terkonfirmasi server, jangan timpa status lokal.
+      if (ambilAntreanPusat().some((it) => it && it.type === "lock_status")) return;
       const endpoint = ambilEndpointPusat();
       if (!endpoint) return;
 
@@ -1834,9 +1914,13 @@
         const signature = JSON.stringify({ portalLocked, lockedPackets });
 
         if (signature !== lastLockSignature) {
-          lastLockSignature = signature;
-          localStorage.setItem(STORAGE_KEY_KUNCI_HALAMAN, portalLocked ? "1" : "0");
-          localStorage.setItem(STORAGE_KEY_KUNCI_PAKET, JSON.stringify(lockedPackets));
+          try {
+            localStorage.setItem(STORAGE_KEY_KUNCI_HALAMAN, portalLocked ? "1" : "0");
+            localStorage.setItem(STORAGE_KEY_KUNCI_PAKET, JSON.stringify(lockedPackets));
+            lastLockSignature = signature; // hanya diperbarui bila tersimpan, agar dicoba lagi bila gagal
+          } catch (e) {
+            return;
+          }
 
           renderPilihanPaket();
           terapkanStatusKunciBeranda();
@@ -1856,7 +1940,8 @@
         if (!state.active && !document.hidden) {
           await sinkronkanStatusKunciDariPusat();
         }
-        await new Promise((r) => setTimeout(r, 5000));
+        // 20-25 detik (acak) agar ratusan perangkat tidak membebani Apps Script bersamaan.
+        await new Promise((r) => setTimeout(r, 20000 + Math.random() * 5000));
       }
     }
 
@@ -1872,6 +1957,9 @@
           portalLocked,
           lockedPackets
         }
+      }).then(() => {
+        // Beri sedikit jeda setelah konfirmasi sebelum polling berikutnya.
+        jedaSinkronSetelahAdmin = Date.now() + 2500;
       });
     }
 
@@ -1972,7 +2060,7 @@
               ${dikunci ? "Terkunci" : "Terbuka"}
             </span>
           </div>
-          <button type="button" class="btn ${dikunci ? "btn-success" : "btn-outline"} btn-sm" onclick="toggleKunciPaket('${escapeHtml(p.id)}')">
+          <button type="button" class="btn ${dikunci ? "btn-success" : "btn-outline"} btn-sm" data-id="${escapeHtml(p.id)}" onclick="toggleKunciPaket(this.dataset.id)">
             ${dikunci ? "Buka Kunci" : "Kunci Soal"}
           </button>
         `;
@@ -1982,7 +2070,7 @@
 
     // ==================== PANEL GURU ====================
 
-    const _TEACHER_TPL_B64 = "CiAgICAgIDxkaXYgY2xhc3M9ImhlYWRlciI+CiAgICAgICAgPGRpdiBjbGFzcz0iYnJhbmQiPlBhbmVsIEd1cnU8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLW91dGxpbmUgYnRuLXNtIiBvbmNsaWNrPSJrZWx1YXJQYW5lbEd1cnUoKSI+VHV0dXAgUGFuZWw8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+UGVueWltcGFuYW4gVGVycHVzYXQgSGFzaWwgVWppYW4gKEtodXN1cyBBZG1pbik8L2gzPgogICAgICAgIDxwPktpcmltIG90b21hdGlzIHJla2FwIG5pbGFpIGRhbiBrcml0aWsgc2FyYW4gc2VsdXJ1aCBzaXN3YSBrZSBzYXR1IGVuZHBvaW50IHRlcnB1c2F0IChtaXNhbG55YSBHb29nbGUgQXBwcyBTY3JpcHQgV2ViIEFwcCkuIFNpc3dhIHRpZGFrIGRhcGF0IG1lbGloYXQgcmVrYXAgbWVsYWx1aSB0YW1waWxhbiBoYWxhbWFuLCB0ZXRhcGkgZW5kcG9pbnQgaGFydXMgZGlhbWFua2FuIGRpIGJhY2tlbmQuIEtvc29uZ2thbiBVUkwgbGFsdSBzaW1wYW4gdW50dWsgbWVub25ha3RpZmthbiBwZW5naXJpbWFuIHRlcnB1c2F0LjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDxsYWJlbCBmb3I9ImNlbnRyYWxFbmRwb2ludElucHV0Ij5VUkwgRW5kcG9pbnQgUGVueWltcGFuYW4gVGVycHVzYXQgKEFwcHMgU2NyaXB0IC8gV2ViaG9vayk8L2xhYmVsPgogICAgICAgICAgPGlucHV0IHR5cGU9InVybCIgaWQ9ImNlbnRyYWxFbmRwb2ludElucHV0IiBwbGFjZWhvbGRlcj0iaHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy8uLi4vZXhlYyIgYXV0b2NvbXBsZXRlPSJvZmYiIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJzaW1wYW5Lb25maWd1cmFzaVB1c2F0KCkiPlNpbXBhbiBFbmRwb2ludDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImtpcmltQW50cmVhblRlcnR1bmRhKCkiPktpcmltIEFudHJlYW4gR2FnYWwgKDApPC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBpZD0iY2VudHJhbFN0YXR1c0luZm8iIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPkJhbmsgU29hbCBUZXJwcm90ZWtzaSBkaSBTZXJ2ZXI8L2gzPgogICAgICAgIDxwPlBpbGloIGJlcmthcyBKU09OIGJhbmsgc29hbCBiYXdhYW4geWFuZyBkaXNpbXBhbiBwcml2YXQgcGFkYSBwZXJhbmdrYXQgZ3VydS4gS3VuY2kgamF3YWJhbiBkaWtpcmltIGtlIFNwcmVhZHNoZWV0OyBicm93c2VyIHNpc3dhIGhhbnlhIG1lbmVyaW1hIG1ldGFkYXRhIHBha2V0IGRhbiBzb2FsIGFjYWsgdGFucGEga3VuY2kuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPjxsYWJlbCBmb3I9ImJhbmtQYWtldEZpbGUiPkJlcmthcyBKU09OIFBha2V0IFNvYWw8L2xhYmVsPjxpbnB1dCBpZD0iYmFua1Bha2V0RmlsZSIgdHlwZT0iZmlsZSIgYWNjZXB0PSIuanNvbixhcHBsaWNhdGlvbi9qc29uIiAvPjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9InJvdy0yIiBzdHlsZT0ibWFyZ2luLWJvdHRvbToxMHB4OyI+PGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImltcG9yQmFua1NvYWxEYXJpQmVya2FzKCkiPkJhY2EgQmVya2FzIFBha2V0PC9idXR0b24+PGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbmtyb25rYW5TZW11YVBha2V0S2VTZXJ2ZXIodHJ1ZSkiPlNpbmtyb25rYW4gUGFrZXQga2UgU2VydmVyPC9idXR0b24+PC9kaXY+CiAgICAgICAgPGRpdiBpZD0icGFja2FnZVN5bmNTdGF0dXMiIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyBtYXJnaW4tdG9wOjhweDsiPlBha2V0IHBlcmx1IGRpc2lua3JvbmthbiBzZXRlbGFoIGJhY2tlbmQgdjAuNyBkaXBhc2FuZy48L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+UmVrYXAgTmlsYWkgUGVzZXJ0YSAoTG9rYWwgUGVyYW5na2F0KTwvaDM+CiAgICAgICAgPHA+RGF0YSB0ZXJzaW1wYW4gZGkgYnJvd3NlciBwZXJhbmdrYXQgaW5pLiBBbmRhIGRhcGF0IG1lbmd1bmR1aCByZWthcCBkYWxhbSBmb3JtYXQgQ1NWIChiaXNhIGRpYnVrYSBkaSBFeGNlbC9TcHJlYWRzaGVldCkuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9InJvdy0yIiBzdHlsZT0ibWFyZ2luLWJvdHRvbToxMHB4OyI+CiAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InVuZHVoQ1NWKCkiPlVuZHVoIFJla2FwICguQ1NWKTwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIiIG9uY2xpY2s9ImhhcHVzUmVrYXAoKSI+SGFwdXMgU2VtdWEgUmVrYXA8L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPGRpdiBjbGFzcz0idGFibGUtd3JhcCI+CiAgICAgICAgICA8dGFibGU+CiAgICAgICAgICAgIDx0aGVhZD4KICAgICAgICAgICAgICA8dHI+CiAgICAgICAgICAgICAgICA8dGg+V2FrdHU8L3RoPgogICAgICAgICAgICAgICAgPHRoPk5hbWE8L3RoPgogICAgICAgICAgICAgICAgPHRoPktlbGFzPC90aD4KICAgICAgICAgICAgICAgIDx0aD5QYWtldDwvdGg+CiAgICAgICAgICAgICAgICA8dGg+QmVuYXI8L3RoPgogICAgICAgICAgICAgICAgPHRoPk5pbGFpPC90aD4KICAgICAgICAgICAgICAgIDx0aD5MYW5nZ2FyPC90aD4KICAgICAgICAgICAgICA8L3RyPgogICAgICAgICAgICA8L3RoZWFkPgogICAgICAgICAgICA8dGJvZHkgaWQ9InJla2FwVGFibGVCb2R5Ij48L3Rib2R5PgogICAgICAgICAgPC90YWJsZT4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+S29udHJvbCBLdW5jaSBIYWxhbWFuICZhbXA7IEt1bmNpIFNvYWw8L2gzPgogICAgICAgIDxwPkt1bmNpIHRhbXBpbGFuIGF3YWwgYWdhciBzaXN3YSBiZWx1bSBiaXNhIG1lbmdlcmpha2FuIHNlYmVsdW0gd2FrdHUgZGltdWxhaSwgYXRhdSBrdW5jaSBwYWtldCBzb2FsIHRlcnRlbnR1IGFnYXIgc2lzd2EgdGlkYWsgc2FsYWggbWVtYnVrYSBzb2FsLjwvcD4KCiAgICAgICAgPGRpdiBjbGFzcz0icGFrZXQtbG9jay1yb3ciPgogICAgICAgICAgPGRpdj4KICAgICAgICAgICAgPHN0cm9uZz5LdW5jaSBUYW1waWxhbiBBd2FsIFVqaWFuPC9zdHJvbmc+PGJyLz4KICAgICAgICAgICAgPHNwYW4gaWQ9InN0YXR1c0t1bmNpSGFsYW1hblRleHQiIHN0eWxlPSJmb250LXNpemU6MC44cmVtOyBjb2xvcjp2YXIoLS1tdXRlZCk7Ij5TdGF0dXM6IFRlcmJ1a2E8L3NwYW4+CiAgICAgICAgICA8L2Rpdj4KICAgICAgICAgIDxidXR0b24gaWQ9InRvZ2dsZUt1bmNpSGFsYW1hbkJ0biIgY2xhc3M9ImJ0biBidG4tZGFuZ2VyIGJ0bi1zbSIgb25jbGljaz0idG9nZ2xlS3VuY2lIYWxhbWFuKCkiPkt1bmNpIEhhbGFtYW48L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KCiAgICAgICAgPGRpdiBzdHlsZT0ibWFyZ2luLXRvcDoxMnB4OyI+CiAgICAgICAgICA8c3Ryb25nIHN0eWxlPSJmb250LXNpemU6MC44OHJlbTsgZGlzcGxheTpibG9jazsgbWFyZ2luLWJvdHRvbTo2cHg7Ij5LdW5jaSAvIEJ1a2EgUGFrZXQgU29hbDo8L3N0cm9uZz4KICAgICAgICAgIDxkaXYgaWQ9ImRhZnRhckt1bmNpUGFrZXQiPjwvZGl2PgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgIDxoMz5Lcml0aWsgZGFuIFNhcmFuIE1hc3VrPC9oMz4KICAgICAgICA8ZGl2IGNsYXNzPSJyb3ctMiIgc3R5bGU9Im1hcmdpbi1ib3R0b206MTBweDsiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1vdXRsaW5lIGJ0bi1zbSIgb25jbGljaz0icmVuZGVyRGFmdGFyS3JpdGlrKCkiPlNlZ2Fya2FuPC9idXR0b24+CiAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLWRhbmdlciBidG4tc20iIG9uY2xpY2s9ImhhcHVzU2VtdWFLcml0aWsoKSI+SGFwdXMgU2VtdWEgTWFzdWthbjwvYnV0dG9uPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgaWQ9ImRhZnRhcktyaXRpa0NvbnRhaW5lciIgc3R5bGU9ImZvbnQtc2l6ZTowLjg2cmVtOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPktlbG9sYSBEYWZ0YXIgTmFtYSBTaXN3YTwvaDM+CiAgICAgICAgPHA+UGlsaWgga2VsYXMgbGFsdSBtYXN1a2thbiBzYXR1IG5hbWEgc2lzd2EgcGVyIGJhcmlzLiBEYWZ0YXIgZGlzaW1wYW4gZGkgU3ByZWFkc2hlZXQgZGFuIGhhbnlhIGRhcGF0IGRpYmFjYSBtZWxhbHVpIHNlc2kgYWRtaW4uIFNpc3dhIG1lbmdldGlrIG5hbWFueWEgc2VuZGlyaTsgc2VydmVyIGFrYW4gbWVtdmFsaWRhc2kga2Vhbmdnb3RhYW4ga2VsYXMuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPGxhYmVsIGZvcj0iYWRtaW5LZWxhc05hbWFTZWxlY3QiPlBpbGloIEtlbGFzPC9sYWJlbD4KICAgICAgICAgIDxzZWxlY3QgaWQ9ImFkbWluS2VsYXNOYW1hU2VsZWN0IiBvbmNoYW5nZT0ibXVhdFRleHRhcmVhTmFtYUFkbWluKCkiPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBBIj5LZWxhcyBJViBBPC9vcHRpb24+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEIiPktlbGFzIElWIEI8L29wdGlvbj4KICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iS2VsYXMgSVYgQyI+S2VsYXMgSVYgQzwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBEIj5LZWxhcyBJViBEPC9vcHRpb24+CiAgICAgICAgICA8L3NlbGVjdD4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDx0ZXh0YXJlYSBpZD0iZGFmdGFyTmFtYUlucHV0IiByb3dzPSI1IiBwbGFjZWhvbGRlcj0iU2F0dSBuYW1hIHNpc3dhIHBlciBiYXJpcy4uLiI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbXBhbkRhZnRhck5hbWEoKSI+U2ltcGFuIERhZnRhciBOYW1hPC9idXR0b24+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPlRhbWJhaCBQYWtldCBTb2FsIEJhcnUgKEZvcm1hdCBKU09OKTwvaDM+CiAgICAgICAgPHA+VGVtcGVsa2FuIEpTT04gZGVuZ2FuIGZvcm1hdDogPGNvZGU+eyJqdWR1bCI6Ii4uLiIsImR1cmFzaU1lbml0IjoxMCwic29hbCI6W3sicSI6Ii4uLiIsIm9wc2kiOlsiQSIsIkIiLCJDIiwiRCJdLCJqYXdhYmFuIjowfV19PC9jb2RlPiAoaW5kZWtzIDxjb2RlPmphd2FiYW48L2NvZGU+IG11bGFpIGRhcmkgMCkuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPHRleHRhcmVhIGlkPSJqc29uUGFrZXRJbnB1dCIgcm93cz0iNiIgcGxhY2Vob2xkZXI9InsmcXVvdDtqdWR1bCZxdW90OzomcXVvdDtMYXRpaGFuIElQQSZxdW90OywmcXVvdDtkdXJhc2lNZW5pdCZxdW90OzoxMCwmcXVvdDtzb2FsJnF1b3Q7Olt7JnF1b3Q7cSZxdW90OzomcXVvdDtQbGFuZXQgdGVyZGVrYXQgbWF0YWhhcmk/JnF1b3Q7LCZxdW90O29wc2kmcXVvdDs6WyZxdW90O01lcmt1cml1cyZxdW90OywmcXVvdDtWZW51cyZxdW90OywmcXVvdDtCdW1pJnF1b3Q7LCZxdW90O01hcnMmcXVvdDtdLCZxdW90O2phd2FiYW4mcXVvdDs6MH1dfSI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbXBhblBha2V0QmFydSgpIj5TaW1wYW4gUGFrZXQgU29hbDwvYnV0dG9uPgogICAgICA8L2Rpdj4=";
+    const _TEACHER_TPL_B64 = "CiAgICAgIDxkaXYgY2xhc3M9ImhlYWRlciI+CiAgICAgICAgPGRpdiBjbGFzcz0iYnJhbmQiPlBhbmVsIEd1cnU8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLW91dGxpbmUgYnRuLXNtIiBvbmNsaWNrPSJrZWx1YXJQYW5lbEd1cnUoKSI+VHV0dXAgUGFuZWw8L2J1dHRvbj4KICAgICAgPC9kaXY+CgogICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICA8aDM+UGVueWltcGFuYW4gVGVycHVzYXQgSGFzaWwgVWppYW4gKEtodXN1cyBBZG1pbik8L2gzPgogICAgICAgIDxwPktpcmltIG90b21hdGlzIHJla2FwIG5pbGFpIGRhbiBrcml0aWsgc2FyYW4gc2VsdXJ1aCBzaXN3YSBrZSBzYXR1IGVuZHBvaW50IHRlcnB1c2F0IChtaXNhbG55YSBHb29nbGUgQXBwcyBTY3JpcHQgV2ViIEFwcCkuIFNpc3dhIHRpZGFrIGRhcGF0IG1lbGloYXQgcmVrYXAgbWVsYWx1aSB0YW1waWxhbiBoYWxhbWFuLCB0ZXRhcGkgZW5kcG9pbnQgaGFydXMgZGlhbWFua2FuIGRpIGJhY2tlbmQuIEtvc29uZ2thbiBVUkwgbGFsdSBzaW1wYW4gdW50dWsgbWVub25ha3RpZmthbiBwZW5naXJpbWFuIHRlcnB1c2F0LjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDxsYWJlbCBmb3I9ImNlbnRyYWxFbmRwb2ludElucHV0Ij5VUkwgRW5kcG9pbnQgUGVueWltcGFuYW4gVGVycHVzYXQgKEFwcHMgU2NyaXB0IC8gV2ViaG9vayk8L2xhYmVsPgogICAgICAgICAgPGlucHV0IHR5cGU9InVybCIgaWQ9ImNlbnRyYWxFbmRwb2ludElucHV0IiBwbGFjZWhvbGRlcj0iaHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy8uLi4vZXhlYyIgYXV0b2NvbXBsZXRlPSJvZmYiIC8+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0icm93LTIiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHg7Ij4KICAgICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJzaW1wYW5Lb25maWd1cmFzaVB1c2F0KCkiPlNpbXBhbiBFbmRwb2ludDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImtpcmltQW50cmVhblRlcnR1bmRhKCkiPktpcmltIEFudHJlYW4gR2FnYWwgKDApPC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBpZD0iY2VudHJhbFN0YXR1c0luZm8iIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPkJhbmsgU29hbCBUZXJwcm90ZWtzaSBkaSBTZXJ2ZXI8L2gzPgogICAgICAgIDxwPlBpbGloIGJlcmthcyBKU09OIGJhbmsgc29hbCBiYXdhYW4geWFuZyBkaXNpbXBhbiBwcml2YXQgcGFkYSBwZXJhbmdrYXQgZ3VydS4gS3VuY2kgamF3YWJhbiBkaWtpcmltIGtlIFNwcmVhZHNoZWV0OyBicm93c2VyIHNpc3dhIGhhbnlhIG1lbmVyaW1hIG1ldGFkYXRhIHBha2V0IGRhbiBzb2FsIGFjYWsgdGFucGEga3VuY2kuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPjxsYWJlbCBmb3I9ImJhbmtQYWtldEZpbGUiPkJlcmthcyBKU09OIFBha2V0IFNvYWw8L2xhYmVsPjxpbnB1dCBpZD0iYmFua1Bha2V0RmlsZSIgdHlwZT0iZmlsZSIgYWNjZXB0PSIuanNvbixhcHBsaWNhdGlvbi9qc29uIiAvPjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9InJvdy0yIiBzdHlsZT0ibWFyZ2luLWJvdHRvbToxMHB4OyI+PGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLW91dGxpbmUiIG9uY2xpY2s9ImltcG9yQmFua1NvYWxEYXJpQmVya2FzKCkiPkJhY2EgQmVya2FzIFBha2V0PC9idXR0b24+PGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbmtyb25rYW5TZW11YVBha2V0S2VTZXJ2ZXIodHJ1ZSkiPlNpbmtyb25rYW4gUGFrZXQga2UgU2VydmVyPC9idXR0b24+PC9kaXY+CiAgICAgICAgPGRpdiBpZD0icGFja2FnZVN5bmNTdGF0dXMiIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTsgY29sb3I6dmFyKC0tbXV0ZWQpOyBtYXJnaW4tdG9wOjhweDsiPlBha2V0IHBlcmx1IGRpc2lua3JvbmthbiBzZXRlbGFoIGJhY2tlbmQgdjAuNy41IGRpcGFzYW5nLjwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgIDxoMz5SZWthcCBOaWxhaSBQZXNlcnRhIChEYXRhIFNlcnZlcik8L2gzPgogICAgICAgIDxwPkRhdGEgZGlhbWJpbCBkYXJpIFNwcmVhZHNoZWV0L3NlcnZlciBhZ2FyIGhhc2lsIHVqaWFuIGRhcmkgSFAgc2lzd2EgbGFpbiBqdWdhIHRhbXBpbCBkaSBwYW5lbCBhZG1pbi4gSmlrYSBzZXJ2ZXIgdGlkYWsgdGVyc2VkaWEsIGFwbGlrYXNpIG1lbmFtcGlsa2FuIGNhY2hlIGxva2FsLjwvcD4KICAgICAgICA8ZGl2IGNsYXNzPSJyb3ctMiIgc3R5bGU9Im1hcmdpbi1ib3R0b206MTBweDsiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1wcmltYXJ5IiBvbmNsaWNrPSJ1bmR1aENTVigpIj5VbmR1aCBSZWthcCAoLkNTVik8L2J1dHRvbj4KICAgICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tb3V0bGluZSIgb25jbGljaz0ibXVhdERhdGFBZG1pbkRhcmlQdXNhdChmYWxzZSkiPlNlZ2Fya2FuIERhdGEgU2VydmVyPC9idXR0b24+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGRpdiBpZD0iYWRtaW5EYXRhU3luY0luZm8iIHN0eWxlPSJmb250LXNpemU6MC44MnJlbTtjb2xvcjp2YXIoLS1tdXRlZCk7bWFyZ2luLWJvdHRvbToxMHB4OyI+RGF0YSBzZXJ2ZXIgYmVsdW0gZGltdWF0LjwvZGl2PgoKICAgICAgICA8ZGl2IGNsYXNzPSJ0YWJsZS13cmFwIj4KICAgICAgICAgIDx0YWJsZT4KICAgICAgICAgICAgPHRoZWFkPgogICAgICAgICAgICAgIDx0cj4KICAgICAgICAgICAgICAgIDx0aD5XYWt0dTwvdGg+CiAgICAgICAgICAgICAgICA8dGg+TmFtYTwvdGg+CiAgICAgICAgICAgICAgICA8dGg+S2VsYXM8L3RoPgogICAgICAgICAgICAgICAgPHRoPlBha2V0PC90aD4KICAgICAgICAgICAgICAgIDx0aD5CZW5hcjwvdGg+CiAgICAgICAgICAgICAgICA8dGg+TmlsYWk8L3RoPgogICAgICAgICAgICAgICAgPHRoPkxhbmdnYXI8L3RoPgogICAgICAgICAgICAgIDwvdHI+CiAgICAgICAgICAgIDwvdGhlYWQ+CiAgICAgICAgICAgIDx0Ym9keSBpZD0icmVrYXBUYWJsZUJvZHkiPjwvdGJvZHk+CiAgICAgICAgICA8L3RhYmxlPgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgIDxoMz5Lb250cm9sIEt1bmNpIEhhbGFtYW4gJmFtcDsgS3VuY2kgU29hbDwvaDM+CiAgICAgICAgPHA+S3VuY2kgdGFtcGlsYW4gYXdhbCBhZ2FyIHNpc3dhIGJlbHVtIGJpc2EgbWVuZ2VyamFrYW4gc2ViZWx1bSB3YWt0dSBkaW11bGFpLCBhdGF1IGt1bmNpIHBha2V0IHNvYWwgdGVydGVudHUgYWdhciBzaXN3YSB0aWRhayBzYWxhaCBtZW1idWthIHNvYWwuPC9wPgoKICAgICAgICA8ZGl2IGNsYXNzPSJwYWtldC1sb2NrLXJvdyI+CiAgICAgICAgICA8ZGl2PgogICAgICAgICAgICA8c3Ryb25nPkt1bmNpIFRhbXBpbGFuIEF3YWwgVWppYW48L3N0cm9uZz48YnIvPgogICAgICAgICAgICA8c3BhbiBpZD0ic3RhdHVzS3VuY2lIYWxhbWFuVGV4dCIgc3R5bGU9ImZvbnQtc2l6ZTowLjhyZW07IGNvbG9yOnZhcigtLW11dGVkKTsiPlN0YXR1czogVGVyYnVrYTwvc3Bhbj4KICAgICAgICAgIDwvZGl2PgogICAgICAgICAgPGJ1dHRvbiBpZD0idG9nZ2xlS3VuY2lIYWxhbWFuQnRuIiBjbGFzcz0iYnRuIGJ0bi1kYW5nZXIgYnRuLXNtIiBvbmNsaWNrPSJ0b2dnbGVLdW5jaUhhbGFtYW4oKSI+S3VuY2kgSGFsYW1hbjwvYnV0dG9uPgogICAgICAgIDwvZGl2PgoKICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7Ij4KICAgICAgICAgIDxzdHJvbmcgc3R5bGU9ImZvbnQtc2l6ZTowLjg4cmVtOyBkaXNwbGF5OmJsb2NrOyBtYXJnaW4tYm90dG9tOjZweDsiPkt1bmNpIC8gQnVrYSBQYWtldCBTb2FsOjwvc3Ryb25nPgogICAgICAgICAgPGRpdiBpZD0iZGFmdGFyS3VuY2lQYWtldCI+PC9kaXY+CiAgICAgICAgPC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPktyaXRpayBkYW4gU2FyYW4gTWFzdWs8L2gzPgogICAgICAgIDxkaXYgY2xhc3M9InJvdy0yIiBzdHlsZT0ibWFyZ2luLWJvdHRvbToxMHB4OyI+CiAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLW91dGxpbmUgYnRuLXNtIiBvbmNsaWNrPSJtdWF0RGF0YUFkbWluRGFyaVB1c2F0KGZhbHNlKSI+U2VnYXJrYW48L2J1dHRvbj4KICAgICAgICAgIAogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgaWQ9ImRhZnRhcktyaXRpa0NvbnRhaW5lciIgc3R5bGU9ImZvbnQtc2l6ZTowLjg2cmVtOyI+PC9kaXY+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPktlbG9sYSBEYWZ0YXIgTmFtYSBTaXN3YTwvaDM+CiAgICAgICAgPHA+UGlsaWgga2VsYXMgbGFsdSBtYXN1a2thbiBzYXR1IG5hbWEgc2lzd2EgcGVyIGJhcmlzLiBEYWZ0YXIgZGlzaW1wYW4gZGkgU3ByZWFkc2hlZXQgZGFuIGhhbnlhIGRhcGF0IGRpYmFjYSBtZWxhbHVpIHNlc2kgYWRtaW4uIFNpc3dhIG1lbmdldGlrIG5hbWFueWEgc2VuZGlyaTsgc2VydmVyIGFrYW4gbWVtdmFsaWRhc2kga2Vhbmdnb3RhYW4ga2VsYXMuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPGxhYmVsIGZvcj0iYWRtaW5LZWxhc05hbWFTZWxlY3QiPlBpbGloIEtlbGFzPC9sYWJlbD4KICAgICAgICAgIDxzZWxlY3QgaWQ9ImFkbWluS2VsYXNOYW1hU2VsZWN0IiBvbmNoYW5nZT0ibXVhdFRleHRhcmVhTmFtYUFkbWluKCkiPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBBIj5LZWxhcyBJViBBPC9vcHRpb24+CiAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IktlbGFzIElWIEIiPktlbGFzIElWIEI8L29wdGlvbj4KICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iS2VsYXMgSVYgQyI+S2VsYXMgSVYgQzwvb3B0aW9uPgogICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJLZWxhcyBJViBEIj5LZWxhcyBJViBEPC9vcHRpb24+CiAgICAgICAgICA8L3NlbGVjdD4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyb3VwIj4KICAgICAgICAgIDx0ZXh0YXJlYSBpZD0iZGFmdGFyTmFtYUlucHV0IiByb3dzPSI1IiBwbGFjZWhvbGRlcj0iU2F0dSBuYW1hIHNpc3dhIHBlciBiYXJpcy4uLiI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbXBhbkRhZnRhck5hbWEoKSI+U2ltcGFuIERhZnRhciBOYW1hPC9idXR0b24+CiAgICAgIDwvZGl2PgoKICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgPGgzPlRhbWJhaCBQYWtldCBTb2FsIEJhcnUgKEZvcm1hdCBKU09OKTwvaDM+CiAgICAgICAgPHA+VGVtcGVsa2FuIEpTT04gZGVuZ2FuIGZvcm1hdDogPGNvZGU+eyJqdWR1bCI6Ii4uLiIsImR1cmFzaU1lbml0IjoxMCwic29hbCI6W3sicSI6Ii4uLiIsIm9wc2kiOlsiQSIsIkIiLCJDIiwiRCJdLCJqYXdhYmFuIjowfV19PC9jb2RlPiAoaW5kZWtzIDxjb2RlPmphd2FiYW48L2NvZGU+IG11bGFpIGRhcmkgMCkuPC9wPgogICAgICAgIDxkaXYgY2xhc3M9ImZvcm0tZ3JvdXAiPgogICAgICAgICAgPHRleHRhcmVhIGlkPSJqc29uUGFrZXRJbnB1dCIgcm93cz0iNiIgcGxhY2Vob2xkZXI9InsmcXVvdDtqdWR1bCZxdW90OzomcXVvdDtMYXRpaGFuIElQQSZxdW90OywmcXVvdDtkdXJhc2lNZW5pdCZxdW90OzoxMCwmcXVvdDtzb2FsJnF1b3Q7Olt7JnF1b3Q7cSZxdW90OzomcXVvdDtQbGFuZXQgdGVyZGVrYXQgbWF0YWhhcmk/JnF1b3Q7LCZxdW90O29wc2kmcXVvdDs6WyZxdW90O01lcmt1cml1cyZxdW90OywmcXVvdDtWZW51cyZxdW90OywmcXVvdDtCdW1pJnF1b3Q7LCZxdW90O01hcnMmcXVvdDtdLCZxdW90O2phd2FiYW4mcXVvdDs6MH1dfSI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXByaW1hcnkiIG9uY2xpY2s9InNpbXBhblBha2V0QmFydSgpIj5TaW1wYW4gUGFrZXQgU29hbDwvYnV0dG9uPgogICAgICA8L2Rpdj4=";
     function isAdminAuthenticated() {
       return sessionAdminAuthenticated === true;
     }
@@ -2004,7 +2092,19 @@
     function bukaModalGuru() {
       document.getElementById("teacherPinInput").value = "";
       document.getElementById("pinModal").classList.remove("hidden");
+      setTimeout(() => { const el = document.getElementById("teacherPinInput"); if (el) el.focus(); }, 50);
     }
+
+    document.addEventListener("keydown", (e) => {
+      const modal = document.getElementById("pinModal");
+      if (!modal || modal.classList.contains("hidden")) return;
+      if (e.key === "Escape") {
+        tutupModalGuru();
+      } else if (e.key === "Enter" && e.target && e.target.id === "teacherPinInput") {
+        e.preventDefault();
+        verifikasiPinGuru();
+      }
+    });
 
     function tutupModalGuru() {
       document.getElementById("pinModal").classList.add("hidden");
@@ -2065,6 +2165,7 @@
       renderTabelRekap();
       kirimAntreanTertunda();
       muatPaketMetaDariPusat();
+      muatDataAdminDariPusat(true);
     }
 
     function keluarPanelGuru() {
@@ -2096,9 +2197,9 @@
           <td>${escapeHtml(r.nama)}</td>
           <td>${escapeHtml(r.kelas)}</td>
           <td>${escapeHtml(r.paket)}</td>
-          <td>${r.benar}/${r.total}</td>
-          <td><strong>${r.nilai}</strong></td>
-          <td>${r.pelanggaran}</td>
+          <td>${escapeHtml(String(r.benar))}/${escapeHtml(String(r.total))}</td>
+          <td><strong>${escapeHtml(String(r.nilai))}</strong></td>
+          <td>${escapeHtml(String(r.pelanggaran))}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -2133,7 +2234,7 @@
 
     function hapusRekap() {
       if (!isAdminAuthenticated()) return;
-      if (!confirm("Hapus seluruh data rekap nilai di perangkat ini?")) return;
+      if (!confirm("Hapus cache rekap nilai di HP ini? Data pada Spreadsheet/server tidak ikut terhapus.")) return;
       localStorage.removeItem(STORAGE_KEY_REKAP);
       renderTabelRekap();
       renderPilihanNama();
@@ -2249,23 +2350,39 @@
     }
 
     // ==================== EVENT LISTENER ANTI-CHEAT ====================
-    function kunciRiwayatBrowser() {
+    // Jumlah entri riwayat tambahan yang kita buat, supaya bisa dibersihkan setelah ujian.
+    let riwayatExtra = 0;
+
+    function kunciRiwayatBrowser(jumlah = 1) {
       try {
-        history.pushState({ examLock: true }, "", location.href);
-        history.pushState({ examLock: true }, "", location.href);
+        for (let i = 0; i < jumlah; i++) {
+          history.pushState({ examLock: true }, "", location.href);
+          riwayatExtra++;
+        }
       } catch (e) {}
+    }
+
+    function bersihkanRiwayatUjian() {
+      const n = riwayatExtra;
+      riwayatExtra = 0;
+      if (n > 0) {
+        try { history.go(-n); } catch (e) {}
+      }
     }
 
     window.addEventListener("popstate", () => {
       if (state.active && !state.submitted) {
-        kunciRiwayatBrowser();
+        // Satu entri baru saja keluar dari riwayat; isi kembali satu saja (kedalaman tetap).
+        riwayatExtra = Math.max(0, riwayatExtra - 1);
+        kunciRiwayatBrowser(1);
         catatPelanggaran("Menekan tombol Kembali (Back) saat ujian berlangsung.");
         mintaFullscreen();
       }
     });
 
     window.addEventListener("beforeunload", (e) => {
-      if (state.active && !state.submitted) {
+      // Peringatkan juga bila hasil ujian sudah dikumpulkan tetapi belum dikonfirmasi server.
+      if ((state.active && !state.submitted) || state.pendingSubmission) {
         e.preventDefault();
         e.returnValue = "";
       }
@@ -2315,7 +2432,6 @@
       const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
       const fullscreenSupported = Boolean(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
       if (fullscreenSupported && !isFs && state.active && !state.submitted && !sedangMengumpulkan) {
-        kunciRiwayatBrowser();
         catatPelanggaran("Keluar dari mode layar penuh (Fullscreen) — ketuk layar/soal untuk masuk kembali.");
       }
     }
@@ -2346,6 +2462,16 @@
         e.preventDefault();
       }
     });
+
+    // Kirim otomatis antrean yang tertunda (mis. hasil ujian yang belum terkonfirmasi)
+    // saat halaman dibuka kembali atau koneksi internet pulih.
+    function kirimAntreanOtomatis() {
+      if (state.active || sedangMengirimAntrean) return;
+      if (ambilAntreanPusat().length === 0) return;
+      kirimAntreanTertunda(true);
+    }
+    window.addEventListener("online", kirimAntreanOtomatis);
+    setTimeout(kirimAntreanOtomatis, 3000);
 
     // Inisialisasi awal
     if (!isStorageAvailable()) {
